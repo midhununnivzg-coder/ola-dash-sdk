@@ -178,6 +178,7 @@ mod tests {
         r.set_range(120.0);
         r.set_odometer(1000.0);
         r.set_fine_soc(80.0);
+        r.set_battery_pct(80.0);
         r
     }
 
@@ -196,7 +197,7 @@ mod tests {
         r.set_odometer(1002.0);
         r.set_fine_soc(79.5);
         assert!(r.is_calibrated());
-        assert!((r.predicted_range().unwrap() - 318.0).abs() < 0.001);
+        assert!((r.predicted_range().unwrap() - 322.0).abs() < 0.001);
     }
 
     #[test]
@@ -232,26 +233,28 @@ mod tests {
     }
 
     #[test]
-    fn only_soc_increase_restarts_from_range_tab_estimate() {
+    fn battery_percent_increase_restarts_from_range_tab_estimate() {
         let mut r = seeded();
         r.set_odometer(1002.0);
         r.set_fine_soc(79.0);
         assert!(r.is_calibrated());
         r.set_range(105.0);
-        r.set_fine_soc(80.0);
+        r.set_battery_pct(81.0);
+        r.set_fine_soc(81.0);
         assert!(!r.is_calibrated());
         assert_eq!(r.predicted_range(), Some(105.0));
     }
 
     #[test]
-    fn after_soc_increase_new_cycle_calibrates_from_the_higher_soc() {
+    fn after_battery_increase_new_cycle_calibrates_from_the_higher_soc() {
         let mut r = seeded();
         r.set_odometer(1002.0);
         r.set_fine_soc(79.0);
         r.set_range(105.0);
-        r.set_fine_soc(80.0);
+        r.set_battery_pct(81.0);
+        r.set_fine_soc(81.0);
         r.set_odometer(1004.0);
-        r.set_fine_soc(79.5);
+        r.set_fine_soc(80.5);
         assert!(r.is_calibrated());
         assert!((r.predicted_range().unwrap() - 318.0).abs() < 0.001);
     }
