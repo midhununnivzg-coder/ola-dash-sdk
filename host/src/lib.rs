@@ -181,6 +181,8 @@ fn apply_plugins(ui: &ComponentInstance, json: &str) {
     set("Media", "title", text(m, "title"));
     set("Media", "artist", text(m, "artist"));
     set("Media", "playing", Value::Bool(m["playing"].as_bool().unwrap_or(false)));
+    set("Media", "position-ms", Value::Number(m["positionMs"].as_f64().unwrap_or(0.0)));
+    set("Media", "duration-ms", Value::Number(m["durationMs"].as_f64().unwrap_or(0.0)));
     let n = &v["nav"];
     set("Navigation", "active", Value::Bool(n["active"].as_bool().unwrap_or(false)));
     set("Navigation", "instruction", text(n, "instruction"));
