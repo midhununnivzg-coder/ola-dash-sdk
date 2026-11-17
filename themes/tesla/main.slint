@@ -99,13 +99,7 @@ export component Dash inherits Window {
     Rectangle {
         x: 412px; y: 118px; width: 480px; height: 480px;
         border-radius: 28px; background: glass-deep.with-alpha(0.72);
-    }
-    Rectangle { x: 412px; y: 118px; width: 480px; height: 1px; background: card-edge; }
-    Rectangle { x: 412px; y: 597px; width: 480px; height: 1px; background: card-edge; }
-    Rectangle { x: 412px; y: 118px; width: 1px; height: 480px; background: card-edge; }
-    Rectangle {
-        x: 412px; y: 118px; width: 5px; height: 480px;
-        border-radius: 2px; background: charging ? mint-glow : night ? #91a9b4 : #83b8aa;
+        border-width: 1px; border-color: card-edge;
     }
     Text { x: 444px; y: 150px; width: 416px; height: 26px; text: charging ? "STATE OF CHARGE" : "LIVE SPEED"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; horizontal-alignment: center; }
     Text {
