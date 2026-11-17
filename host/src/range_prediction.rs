@@ -57,7 +57,7 @@ impl RangeEstimator {
         if let (Some(previous), Some(current)) = (self.fine_soc_pct, next) {
             // Only an actual increase in battery SoC begins a new prediction cycle.
             if current > previous {
-                self.start_new_charge_cycle();
+                self.start_new_charge_cycle(current);
             }
         }
         self.fine_soc_pct = next;
@@ -71,9 +71,9 @@ impl RangeEstimator {
     pub fn predicted_range(&self) -> Option<f64> { self.predicted_km }
     pub fn is_calibrated(&self) -> bool { self.calibrated }
 
-    fn start_new_charge_cycle(&mut self) {
+    fn start_new_charge_cycle(&mut self, new_soc: f64) {
         self.baseline_odometer_km = self.odometer_km;
-        self.baseline_soc_pct = self.fine_soc_pct;
+        self.baseline_soc_pct = Some(new_soc);
         self.baseline_range_km = self.range_km;
         self.calibrated = false;
         self.last_update_distance_km = 0.0;
@@ -224,6 +224,19 @@ mod tests {
         r.set_fine_soc(80.0);
         assert!(!r.is_calibrated());
         assert_eq!(r.predicted_range(), Some(105.0));
+    }
+
+    #[test]
+    fn after_soc_increase_new_cycle_calibrates_from_the_higher_soc() {
+        let mut r = seeded();
+        r.set_odometer(1002.0);
+        r.set_fine_soc(79.0);
+        r.set_range(105.0);
+        r.set_fine_soc(80.0);
+        r.set_odometer(1004.0);
+        r.set_fine_soc(79.5);
+        assert!(r.is_calibrated());
+        assert!((r.predicted_range().unwrap() - 318.0).abs() < 0.001);
     }
 
     #[test]
