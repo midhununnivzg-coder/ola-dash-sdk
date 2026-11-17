@@ -236,7 +236,7 @@ export component SettingsScreen inherits Rectangle {
                     minimum: 10;
                     maximum: 100;
                     value: HostState.brightness-pct;
-                    changed => { root.set-setting("brightness", round(self.value) + ""); }
+                    changed(value) => { root.set-setting("brightness", round(value) + ""); }
                 }
                 HostText {
                     x: 572px; y: 0px; width: 68px; height: parent.height;
