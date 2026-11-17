@@ -93,8 +93,6 @@ jobs:
             host/target
           key: cargo-host-${{ runner.os }}-${{ hashFiles('host/Cargo.lock') }}
 
-      # The runner's Android SDK ships an NDK; use its API 29 clang for C build scripts.
-      # Not verified in a run yet: the first run may need the NDK path adjusted.
       - name: cargo check for aarch64-linux-android
         run: |
           NDK_BIN="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -114,10 +112,16 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             "platforms;android-34" "build-tools;34.0.0" "ndk;27.2.12479018" > /dev/null
 
-      - name: Build APK
-        run: JDK_HOME="$JAVA_HOME" ANDROID_HOME="$ANDROID_HOME" host/build.sh
+      - name: Stage Tesla-inspired theme
+        run: |
+          mkdir -p "$RUNNER_TEMP/ola-extra-themes"
+          cp -R themes/tesla "$RUNNER_TEMP/ola-extra-themes/tesla"
+
+      - name: Build APK with EV Vision theme bundled
+        run: EXTRA_THEMES="$RUNNER_TEMP/ola-extra-themes" JDK_HOME="$JAVA_HOME" ANDROID_HOME="$ANDROID_HOME" host/build.sh
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ola-dash-debug-apk
+          name: ola-dash-ev-vision-apk
           path: host/out/ola-dash-debug.apk
+          if-no-files-found: error
