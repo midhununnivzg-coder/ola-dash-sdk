@@ -153,14 +153,14 @@ export component UnlockScreen inherits Rectangle {
         border-radius: 2px; background: LockConfig.style.accent;
     }
     HostText {
-        x: 104px; y: 38px; width: 360px; height: 18px;
-        text: "OLA ELECTRIC  /  EV VISION";
+        x: 104px; y: 62px; width: 360px; height: 22px;
+        text: "Ola electric / ev vision";
         color: LockConfig.style.muted;
         font-size: 14px; font-weight: 800; letter-spacing: 2px;
     }
     HostText {
-        x: root.kx; y: 38px; width: 596px; height: 18px;
-        text: "SECURE VEHICLE ACCESS";
+        x: root.kx; y: 62px; width: 596px; height: 22px;
+        text: "VEHICLE ACCESS";
         color: LockConfig.style.muted;
         font-size: 14px; font-weight: 800; letter-spacing: 2px;
     }
@@ -261,7 +261,7 @@ export component UnlockScreen inherits Rectangle {
 
     // ---- right column: caption, hint or status, passcode cells, keypad ----
     HostText {
-        x: root.kx + 36px; y: 84px; width: 524px; height: 42px;
+        x: root.kx + 36px; y: 110px; width: 524px; height: 42px;
         text: root.phase == 0 ? (root.error == 2 ? "Connection unavailable" : "Connecting")
             : root.phase == 3 ? "Unlocking"
             : root.phase == 2 ? "Checking passcode"
@@ -275,7 +275,7 @@ export component UnlockScreen inherits Rectangle {
     }
 
     HostText {
-        x: root.kx + 36px; y: 130px; width: 524px; height: 48px;
+        x: root.kx + 36px; y: 156px; width: 524px; height: 48px;
         text: root.line;
         color: root.failed ? LockConfig.error : LockConfig.style.muted;
         font-size: 18px;
@@ -285,7 +285,7 @@ export component UnlockScreen inherits Rectangle {
 
     // Passcode cells: a dot per digit entered. Square when the keys are.
     if root.entering : HorizontalLayout {
-        x: root.kx + 36px; y: 190px; width: 524px; height: 56px;
+        x: root.kx + 36px; y: 216px; width: 524px; height: 56px;
         spacing: 12px;
         for i in 6 : Rectangle {
             border-radius: root.square-cells ? 4px : 18px;
@@ -304,7 +304,7 @@ export component UnlockScreen inherits Rectangle {
 
     // Keypad: 3 x 4 keys in a fixed 596 x 432 block. Grid keys share 1 px hairlines.
     if root.entering : Rectangle {
-        x: root.kx + 36px; y: 262px; width: 524px; height: 410px;
+        x: root.kx + 36px; y: 286px; width: 524px; height: 410px;
         background: root.grid ? LockConfig.style.key-border : transparent;
         VerticalLayout {
             spacing: root.gap;
