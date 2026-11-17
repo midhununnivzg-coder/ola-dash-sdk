@@ -1,7 +1,6 @@
-// EV Vision — a Tesla-inspired, minimalist EV cockpit for Ola Dash.
-// Fixed 1280x768 layout. The host owns the top 48 px telltale strip.
+// EV Vision — premium glass cockpit for the first-generation Ola S1.
+// Fixed 1280x768 canvas. The host owns the top 48 px telltale strip.
 import { Vehicle, Media, Actions, Battery, Ride, DriveMode, VehicleState, Navigation, Plugins, Display, OverlayPlacement, OverlayStyle, Telltale, LockStyle, LockKeyShape, LockDigits } from "vehicle.slint";
-
 export { Vehicle, Media, Actions, DriveMode, Battery, Ride, Navigation, Plugins }
 
 export component Dash inherits Window {
@@ -10,31 +9,30 @@ export component Dash inherits Window {
     background: page;
     default-font-family: "Arial";
 
-    // Display.night is driven by the host's Off / On / Auto setting.
-    // Auto follows the configured local schedule (default 19:00–06:30).
     property <bool> night: Display.night;
-    property <color> page: night ? #050505 : #f2f6f4;
-    property <color> panel: night ? #0b0b0b : #ffffff;
-    property <color> panel-raised: night ? #101010 : #e9efed;
-    property <color> border: night ? #292929 : #d6e0dc;
-    property <color> border-strong: night ? #303030 : #c5d3cd;
-    property <color> ink: night ? #f5f5f5 : #17231f;
-    property <color> muted: night ? #777777 : #62736c;
-    property <color> soft: night ? #888888 : #71827b;
-    property <color> scooter-mint: #8fd8c7;
-    property <color> scooter-dark: #202020;
-    property <color> wheel-fill: night ? #050505 : #dce5e1;
-    property <color> wheel-outline: night ? #777777 : #50645b;
-    property <color> scooter-trim: night ? #d8d8d8 : #45554e;
-    property <color> danger: #e82127;
-    property <color> danger-soft: night ? #702024 : #f2c9c7;
+    property <color> page: night ? #080d13 : #e8f0ed;
+    property <color> glass: night ? #17232c : #ffffff;
+    property <color> glass-deep: night ? #101a22 : #f6faf8;
+    property <color> glass-edge: night ? #52636c : #c5d5cf;
+    property <color> glass-highlight: night ? #b9d2d8 : #ffffff;
+    property <color> ink: night ? #f3f8f7 : #15241f;
+    property <color> muted: night ? #9aadb1 : #60746d;
+    property <color> faint: night ? #60757b : #91a39c;
+    property <color> mint: #8bdcc8;
+    property <color> mint-deep: #4baf9b;
+    property <color> mint-glow: night ? #5ce0c2 : #299c83;
+    property <color> red: #ff625f;
+    property <color> amber: #ffca76;
+    property <color> wheel: night ? #11181d : #dce6e1;
+    property <color> trim: night ? #b5c5c5 : #3e514b;
+    property <color> black: #11191d;
 
-    property <bool> charge-view: Vehicle.charging || Vehicle.state == VehicleState.charging;
-    property <bool> parked: !charge-view && (Vehicle.state == VehicleState.park || Vehicle.mode == DriveMode.park);
+    property <bool> charging: Vehicle.charging || Vehicle.state == VehicleState.charging;
+    property <bool> parked: !charging && (Vehicle.state == VehicleState.park || Vehicle.mode == DriveMode.park);
     property <bool> reversing: Vehicle.mode == DriveMode.reverse;
     property <bool> easy-parking: Vehicle.mode == DriveMode.easy-park;
     property <bool> trunk-ready: Vehicle.state == VehicleState.park && Vehicle.speed-kmh == 0 && !Vehicle.trunk-open;
-    property <color> accent: charge-view ? #43d6a0 : danger;
+    property <color> accent: charging ? mint-glow : red;
     property <float> speed-shown: Vehicle.speed-kmh;
     animate speed-shown { duration: 420ms; easing: ease-out; }
     property <float> battery-shown: max(0, Vehicle.battery-pct);
@@ -48,294 +46,208 @@ export component Dash inherits Window {
         Telltale.fault, Telltale.locked, Telltale.charging,
     ];
     out property <OverlayStyle> overlay-style: {
-        background: page,
-        foreground: ink,
-        corner-radius: 8px,
-        show-labels: true,
+        background: page, foreground: ink, corner-radius: 12px, show-labels: true,
     };
     out property <LockStyle> lock-style: {
-        background: page,
-        foreground: ink,
-        muted: muted,
-        accent: danger,
-        key-background: panel-raised,
-        key-border: border,
-        key-shape: LockKeyShape.rounded,
-        digits: LockDigits.sans,
+        background: page, foreground: ink, muted: muted, accent: red,
+        key-background: glass-deep, key-border: glass-edge,
+        key-shape: LockKeyShape.rounded, digits: LockDigits.sans,
     };
 
-    // Header — deliberately clear of the host telltale strip.
-    Text {
-        x: 64px; y: 70px; width: 260px; height: 48px;
-        text: Vehicle.clock-text == "" ? "--:--" : Vehicle.clock-text;
-        color: ink; font-size: 36px; font-weight: 600;
+    // Ambient studio lighting: subtle mint and cool-white pools behind the glass.
+    Rectangle {
+        x: 0px; y: 48px; width: 1280px; height: 720px; clip: true;
+        background: @linear-gradient(135deg, page 0%, night ? #0a141b : #f3f8f5 55%, page 100%);
+        Rectangle {
+            x: 310px; y: 42px; width: 650px; height: 520px;
+            background: @radial-gradient(circle, night ? #2ac9ad.with-alpha(0.14) : #74cbb3.with-alpha(0.19) 0%, transparent 70%);
+        }
+        Rectangle {
+            x: 920px; y: 330px; width: 380px; height: 350px;
+            background: @radial-gradient(circle, night ? #6388a0.with-alpha(0.12) : #a8c7bd.with-alpha(0.20) 0%, transparent 72%);
+        }
     }
-    Text {
-        x: 64px; y: 116px; width: 260px; height: 26px;
-        text: Vehicle.data-stale ? "VEHICLE DATA UNAVAILABLE" : "OLA ELECTRIC";
-        color: Vehicle.data-stale ? danger : muted;
-        font-size: 16px; font-weight: 600; letter-spacing: 2px;
-    }
-    Rectangle { x: 64px; y: 158px; width: 1152px; height: 1px; background: border; }
 
-    // Speed panel.
+    // Header / identity.
     Text {
-        x: 64px; y: 214px; width: 330px; height: 190px;
+        x: 48px; y: 72px; width: 180px; height: 48px;
+        text: Vehicle.clock-text == "" ? "--:--" : Vehicle.clock-text;
+        color: ink; font-size: 38px; font-weight: 600; letter-spacing: -1px;
+    }
+    Text {
+        x: 50px; y: 116px; width: 260px; height: 24px;
+        text: Vehicle.data-stale ? "VEHICLE DATA UNAVAILABLE" : "OLA ELECTRIC  /  S1";
+        color: Vehicle.data-stale ? red : muted; font-size: 13px; font-weight: 700; letter-spacing: 2px;
+    }
+    Rectangle {
+        x: 1034px; y: 78px; width: 198px; height: 42px;
+        border-radius: 21px; background: glass-deep.with-alpha(0.82);
+        border-width: 1px; border-color: glass-edge.with-alpha(0.72);
+        Rectangle { x: 1050px; y: 94px; width: 9px; height: 9px; border-radius: 5px; background: Vehicle.data-stale ? amber : mint-glow; }
+        Text {
+            x: 1068px; y: 87px; width: 148px; height: 24px;
+            text: Vehicle.data-stale ? "SYNC PENDING" : charging ? "CHARGING" : parked ? "PARKED  ·  READY" : "RIDE SYSTEM ACTIVE";
+            color: ink; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+        }
+    }
+
+    // Speed glass module — layered translucent surfaces and a restrained accent rail.
+    Rectangle {
+        x: 48px; y: 166px; width: 320px; height: 424px;
+        border-radius: 28px; background: glass-deep.with-alpha(0.72);
+        border-width: 1px; border-color: glass-edge.with-alpha(0.72);
+    }
+    Rectangle {
+        x: 50px; y: 168px; width: 316px; height: 2px;
+        border-radius: 1px; background: glass-highlight.with-alpha(0.48);
+    }
+    Rectangle {
+        x: 48px; y: 166px; width: 5px; height: 424px;
+        border-radius: 2px; background: charging ? mint-glow : night ? #91a9b4 : #83b8aa;
+    }
+    Text { x: 76px; y: 192px; width: 240px; height: 24px; text: charging ? "STATE OF CHARGE" : "LIVE SPEED"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+    Text {
+        x: 70px; y: 248px; width: 276px; height: 174px;
         horizontal-alignment: left; vertical-alignment: center;
-        text: charge-view ? (Vehicle.battery-pct < 0 ? "--" : "" + round(battery-shown))
+        text: charging ? (Vehicle.battery-pct < 0 ? "--" : "" + round(battery-shown))
             : parked ? "P" : reversing ? "R" : "" + round(speed-shown);
-        color: ink;
-        font-size: (parked || reversing) ? 176px : 164px;
+        color: ink; font-size: (parked || reversing) ? 154px : 148px;
         font-weight: 600; letter-spacing: -7px;
     }
     Text {
-        x: 72px; y: 402px; width: 300px; height: 34px;
-        text: charge-view ? "CHARGING" : parked ? "PARKED" : reversing ? "REVERSE" : easy-parking ? "EASY PARK" : "km/h";
-        color: charge-view ? #43d6a0 : soft;
-        font-size: 24px; font-weight: 500; letter-spacing: 2px;
+        x: 80px; y: 412px; width: 240px; height: 30px;
+        text: charging ? "CHARGING" : parked ? "PARKED" : reversing ? "REVERSE" : easy-parking ? "EASY PARK" : "km/h";
+        color: charging ? mint-glow : reversing || easy-parking ? amber : muted;
+        font-size: 20px; font-weight: 600; letter-spacing: 2px;
     }
-    Text {
-        x: 72px; y: 450px; width: 300px; height: 30px;
-        visible: parked;
-        text: "Press power button to ride";
-        color: muted; font-size: 18px;
-    }
-    Text {
-        x: 72px; y: 500px; width: 300px; height: 24px;
-        text: "TRIP";
-        color: muted; font-size: 14px; font-weight: 600; letter-spacing: 2px;
-    }
-    Text {
-        x: 72px; y: 526px; width: 300px; height: 40px;
-        text: "" + round(Vehicle.trip-km * 10) / 10 + " km";
-        color: ink; font-size: 28px; font-weight: 500;
-    }
+    Rectangle { x: 80px; y: 464px; width: 256px; height: 1px; background: glass-edge.with-alpha(0.55); }
+    Text { x: 80px; y: 482px; width: 120px; height: 20px; text: "TRIP DISTANCE"; color: muted; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; }
+    Text { x: 80px; y: 510px; width: 200px; height: 42px; text: "" + round(Vehicle.trip-km * 10) / 10 + " km"; color: ink; font-size: 30px; font-weight: 600; }
+    Text { x: 80px; y: 558px; width: 250px; height: 20px; visible: parked; text: "Tap power to begin your ride"; color: faint; font-size: 13px; }
 
-    // Centre vehicle / navigation canvas. Restrained line-art, not a fake map.
+    // Hero glass stage with the mint S1 silhouette.
     Rectangle {
-        x: 430px; y: 190px; width: 470px; height: 350px;
-        border-radius: 22px; background: panel;
-        border-width: 1px; border-color: border-strong;
+        x: 392px; y: 166px; width: 500px; height: 424px;
+        border-radius: 30px; background: glass.with-alpha(0.52);
+        border-width: 1px; border-color: glass-highlight.with-alpha(0.55);
     }
-    // Soft red ambient horizon line, matching the EV Vision reference.
     Rectangle {
-        x: 454px; y: 438px; width: 422px; height: 2px;
-        border-radius: 1px; background: danger-soft;
+        x: 394px; y: 168px; width: 496px; height: 2px;
+        border-radius: 1px; background: glass-highlight.with-alpha(0.7);
     }
-    Text {
-        x: 462px; y: 214px; width: 406px; height: 24px;
-        text: Navigation.active ? "NAVIGATION" : "VEHICLE";
-        color: muted; font-size: 14px; font-weight: 600; letter-spacing: 2px;
+    Text { x: 422px; y: 192px; width: 300px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : "YOUR S1 PRO"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+    Text { x: 760px; y: 192px; width: 100px; height: 24px; horizontal-alignment: right; text: "GEN  01"; color: faint; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+    // Soft elliptical showroom pool under the vehicle.
+    Rectangle {
+        x: 466px; y: 448px; width: 352px; height: 34px;
+        border-radius: 17px; background: mint-glow.with-alpha(night ? 0.13 : 0.11);
     }
-    // Side profile inspired by the first-generation Ola S1 Pro.
-    // Neo Mint body panels, black saddle, twin wheels, front cowl and rear top-box.
+    Rectangle { x: 430px; y: 472px; width: 424px; height: 1px; background: glass-edge.with-alpha(0.38); }
+
+    // Detailed side profile: separate wheel rings, floorboard, sculpted apron,
+    // curved rear fairing, saddle, headlamp, tail lamp and a scooter top-box.
     if !Navigation.active : Rectangle {
-        x: 548px; y: 350px; width: 70px; height: 70px;
-        border-radius: 35px; background: wheel-fill;
-        border-width: 5px; border-color: wheel-outline;
+        x: 486px; y: 376px; width: 82px; height: 82px; border-radius: 41px;
+        background: black; border-width: 5px; border-color: trim;
     }
+    if !Navigation.active : Rectangle { x: 504px; y: 394px; width: 46px; height: 46px; border-radius: 23px; background: wheel; border-width: 3px; border-color: night ? #72878b : #91a49c; }
+    if !Navigation.active : Rectangle { x: 522px; y: 412px; width: 10px; height: 10px; border-radius: 5px; background: trim; }
     if !Navigation.active : Rectangle {
-        x: 573px; y: 375px; width: 20px; height: 20px;
-        border-radius: 10px; background: scooter-trim;
+        x: 746px; y: 376px; width: 82px; height: 82px; border-radius: 41px;
+        background: black; border-width: 5px; border-color: trim;
     }
-    if !Navigation.active : Rectangle {
-        x: 728px; y: 350px; width: 70px; height: 70px;
-        border-radius: 35px; background: wheel-fill;
-        border-width: 5px; border-color: wheel-outline;
-    }
-    if !Navigation.active : Rectangle {
-        x: 753px; y: 375px; width: 20px; height: 20px;
-        border-radius: 10px; background: scooter-trim;
-    }
-    // Low floorboard and rear swingarm.
-    if !Navigation.active : Rectangle {
-        x: 592px; y: 340px; width: 154px; height: 15px;
-        border-radius: 7px; background: scooter-mint;
-    }
-    if !Navigation.active : Rectangle {
-        x: 704px; y: 346px; width: 56px; height: 8px;
-        border-radius: 4px; background: scooter-trim;
-    }
-    // Gen-1 front apron and leg shield.
-    if !Navigation.active : Rectangle {
-        x: 584px; y: 285px; width: 55px; height: 70px;
-        border-radius: 22px; background: scooter-mint;
-        border-width: 2px; border-color: scooter-trim;
-    }
-    if !Navigation.active : Rectangle {
-        x: 592px; y: 300px; width: 8px; height: 35px;
-        border-radius: 4px; background: #d8f5ec;
-    }
-    // Steering column, handlebar and mirrors.
-    if !Navigation.active : Rectangle {
-        x: 589px; y: 252px; width: 8px; height: 55px;
-        border-radius: 4px; background: scooter-trim;
-    }
-    if !Navigation.active : Rectangle {
-        x: 565px; y: 250px; width: 58px; height: 8px;
-        border-radius: 4px; background: scooter-trim;
-    }
-    if !Navigation.active : Rectangle {
-        x: 568px; y: 234px; width: 4px; height: 18px;
-        border-radius: 2px; background: scooter-trim;
-    }
-    if !Navigation.active : Rectangle {
-        x: 559px; y: 230px; width: 20px; height: 8px;
-        border-radius: 4px; background: scooter-dark;
-        border-width: 1px; border-color: scooter-trim;
-    }
-    // Saddle and mint rear side panel.
-    if !Navigation.active : Rectangle {
-        x: 628px; y: 276px; width: 94px; height: 16px;
-        border-radius: 8px; background: scooter-dark;
-    }
-    if !Navigation.active : Rectangle {
-        x: 665px; y: 297px; width: 76px; height: 48px;
-        border-radius: 18px; background: scooter-mint;
-        border-width: 2px; border-color: scooter-trim;
-    }
-    if !Navigation.active : Text {
-        x: 680px; y: 310px; width: 48px; height: 20px;
-        horizontal-alignment: center; vertical-alignment: center;
-        text: "OLA"; color: #244f45; font-size: 12px; font-weight: 700;
-    }
-    // Headlamp, tail lamp and Gen-1 rear storage box.
-    if !Navigation.active : Rectangle {
-        x: 580px; y: 294px; width: 12px; height: 18px;
-        border-radius: 5px; background: #e9fff8;
-    }
-    if !Navigation.active : Rectangle {
-        x: 733px; y: 307px; width: 10px; height: 14px;
-        border-radius: 4px; background: danger;
-    }
-    if !Navigation.active : Rectangle {
-        x: 704px; y: 286px; width: 62px; height: 10px;
-        border-radius: 5px; background: scooter-trim;
-    }
-    if !Navigation.active : Rectangle {
-        x: 716px; y: 263px; width: 48px; height: 28px;
-        border-radius: 7px; background: scooter-dark;
-        border-width: 2px; border-color: scooter-trim;
-    }
-    if !Navigation.active : Rectangle {
-        x: 721px; y: 259px; width: 38px; height: 6px;
-        border-radius: 3px; background: scooter-trim;
-    }
+    if !Navigation.active : Rectangle { x: 764px; y: 394px; width: 46px; height: 46px; border-radius: 23px; background: wheel; border-width: 3px; border-color: night ? #72878b : #91a49c; }
+    if !Navigation.active : Rectangle { x: 782px; y: 412px; width: 10px; height: 10px; border-radius: 5px; background: trim; }
+    // Swingarm and low floor.
+    if !Navigation.active : Rectangle { x: 550px; y: 366px; width: 220px; height: 14px; border-radius: 7px; background: trim; }
+    if !Navigation.active : Rectangle { x: 558px; y: 354px; width: 176px; height: 19px; border-radius: 8px; background: mint-deep; }
+    if !Navigation.active : Rectangle { x: 575px; y: 354px; width: 135px; height: 5px; border-radius: 2px; background: #d4fff2.with-alpha(0.75); }
+    // Rear body shell and side panel.
+    if !Navigation.active : Rectangle { x: 658px; y: 308px; width: 132px; height: 76px; border-radius: 26px; background: mint; border-width: 2px; border-color: mint-deep; }
+    if !Navigation.active : Rectangle { x: 676px; y: 318px; width: 94px; height: 8px; border-radius: 4px; background: #e3fff6.with-alpha(0.75); }
+    if !Navigation.active : Text { x: 694px; y: 340px; width: 58px; height: 18px; horizontal-alignment: center; text: "OLA"; color: #24574b; font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+    // Front apron / leg shield, layered to suggest real body curvature.
+    if !Navigation.active : Rectangle { x: 548px; y: 282px; width: 72px; height: 100px; border-radius: 28px; background: mint; border-width: 2px; border-color: mint-deep; }
+    if !Navigation.active : Rectangle { x: 557px; y: 294px; width: 12px; height: 70px; border-radius: 6px; background: #e5fff7.with-alpha(0.78); }
+    if !Navigation.active : Rectangle { x: 608px; y: 324px; width: 62px; height: 38px; border-radius: 16px; background: mint; }
+    // Handlebar, mirror and steering neck.
+    if !Navigation.active : Rectangle { x: 572px; y: 252px; width: 9px; height: 58px; border-radius: 4px; background: trim; }
+    if !Navigation.active : Rectangle { x: 550px; y: 250px; width: 66px; height: 8px; border-radius: 4px; background: trim; }
+    if !Navigation.active : Rectangle { x: 550px; y: 234px; width: 5px; height: 18px; border-radius: 2px; background: trim; }
+    if !Navigation.active : Rectangle { x: 539px; y: 228px; width: 25px; height: 9px; border-radius: 5px; background: black; border-width: 1px; border-color: trim; }
+    // Saddle with a highlight edge.
+    if !Navigation.active : Rectangle { x: 625px; y: 282px; width: 116px; height: 19px; border-radius: 10px; background: black; }
+    if !Navigation.active : Rectangle { x: 638px; y: 282px; width: 84px; height: 3px; border-radius: 2px; background: #87999a; }
+    // Lamp and rear scooter top-box (not a car boot).
+    if !Navigation.active : Rectangle { x: 542px; y: 308px; width: 13px; height: 22px; border-radius: 6px; background: #f2fff9; border-width: 1px; border-color: mint-deep; }
+    if !Navigation.active : Rectangle { x: 780px; y: 324px; width: 12px; height: 18px; border-radius: 5px; background: red; }
+    if !Navigation.active : Rectangle { x: 730px; y: 296px; width: 72px; height: 11px; border-radius: 5px; background: trim; }
+    if !Navigation.active : Rectangle { x: 742px; y: 266px; width: 58px; height: 35px; border-radius: 9px; background: black; border-width: 2px; border-color: trim; }
+    if !Navigation.active : Rectangle { x: 748px; y: 261px; width: 46px; height: 7px; border-radius: 4px; background: night ? #a8b8b8 : #52645e; }
+    if !Navigation.active : Rectangle { x: 750px; y: 275px; width: 42px; height: 2px; background: #d8e9e5.with-alpha(0.6); }
     if Navigation.active : Text {
-        x: 466px; y: 278px; width: 398px; height: 104px;
-        text: Navigation.instruction;
-        color: ink; font-size: 30px; font-weight: 600;
+        x: 430px; y: 280px; width: 424px; height: 112px;
+        text: Navigation.instruction; color: ink; font-size: 30px; font-weight: 600;
         wrap: word-wrap; overflow: elide;
     }
     if Navigation.active : Text {
-        x: 466px; y: 410px; width: 398px; height: 44px;
+        x: 430px; y: 414px; width: 424px; height: 38px;
         text: Navigation.distance + "   ·   " + Navigation.eta;
-        color: danger; font-size: 22px; font-weight: 600;
+        color: mint-glow; font-size: 22px; font-weight: 700;
     }
+    Text { x: 422px; y: 520px; width: 440px; height: 22px; text: Navigation.active ? "FOLLOW THE ROUTE" : "NEO MINT  /  FIRST GENERATION"; color: muted; font-size: 11px; font-weight: 700; letter-spacing: 1.6px; }
 
-    // Right-side energy and range.
-    Rectangle {
-        x: 928px; y: 190px; width: 288px; height: 164px;
-        border-radius: 18px; background: panel;
-        border-width: 1px; border-color: border;
-    }
-    Text { x: 952px; y: 212px; width: 240px; height: 24px; text: "BATTERY"; color: muted; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
-    Text {
-        x: 952px; y: 244px; width: 170px; height: 64px;
-        text: Vehicle.battery-pct < 0 ? "--" : "" + round(battery-shown) + "%";
-        color: ink; font-size: 52px; font-weight: 600;
-    }
-    Rectangle { x: 952px; y: 320px; width: 240px; height: 7px; border-radius: 4px; background: border-strong; }
-    Rectangle {
-        x: 952px; y: 320px; width: 240px * battery-fraction; height: 7px;
-        border-radius: 4px; background: battery-shown < 15 ? danger : ink;
-    }
-    Rectangle {
-        x: 928px; y: 374px; width: 288px; height: 166px;
-        border-radius: 18px; background: panel;
-        border-width: 1px; border-color: border;
-    }
-    Text { x: 952px; y: 396px; width: 240px; height: 24px; text: "ESTIMATED RANGE"; color: muted; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
-    Text {
-        x: 952px; y: 430px; width: 240px; height: 68px;
-        text: Vehicle.range-km < 0 ? "--" : "" + Vehicle.range-km;
-        color: ink; font-size: 58px; font-weight: 600;
-    }
-    Text { x: 1080px; y: 466px; width: 100px; height: 28px; text: "km"; color: soft; font-size: 20px; }
-    Text {
-        x: 952px; y: 506px; width: 240px; height: 22px;
-        text: Battery.temp-max-c < 0 ? "PACK TEMP  --" : "PACK TEMP  " + round(Battery.temp-max-c) + "°C";
-        color: muted; font-size: 14px; font-weight: 500;
-    }
+    // Battery and range stack: glass tiles with crisp information hierarchy.
+    Rectangle { x: 916px; y: 166px; width: 316px; height: 198px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: glass-highlight.with-alpha(0.62); }
+    Rectangle { x: 918px; y: 168px; width: 312px; height: 2px; background: glass-highlight.with-alpha(0.65); }
+    Text { x: 944px; y: 192px; width: 240px; height: 22px; text: "BATTERY"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+    Text { x: 940px; y: 226px; width: 190px; height: 70px; text: Vehicle.battery-pct < 0 ? "--" : "" + round(battery-shown) + "%"; color: ink; font-size: 58px; font-weight: 600; letter-spacing: -2px; }
+    Text { x: 944px; y: 300px; width: 240px; height: 20px; text: Vehicle.charging ? "ENERGY FLOW ACTIVE" : "ESTIMATED CHARGE"; color: muted; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+    Rectangle { x: 944px; y: 334px; width: 260px; height: 8px; border-radius: 4px; background: glass-edge.with-alpha(0.45); }
+    Rectangle { x: 944px; y: 334px; width: 260px * battery-fraction; height: 8px; border-radius: 4px; background: battery-shown < 15 ? red : mint-glow; }
+    Rectangle { x: 916px; y: 386px; width: 316px; height: 204px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: glass-highlight.with-alpha(0.62); }
+    Rectangle { x: 918px; y: 388px; width: 312px; height: 2px; background: glass-highlight.with-alpha(0.65); }
+    Text { x: 944px; y: 412px; width: 240px; height: 22px; text: "ESTIMATED RANGE"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+    Text { x: 940px; y: 448px; width: 190px; height: 82px; text: Vehicle.range-km < 0 ? "--" : "" + Vehicle.range-km; color: ink; font-size: 72px; font-weight: 600; letter-spacing: -3px; }
+    Text { x: 1090px; y: 492px; width: 90px; height: 28px; text: "km"; color: muted; font-size: 20px; font-weight: 600; }
+    Text { x: 944px; y: 548px; width: 250px; height: 20px; text: Battery.temp-max-c < 0 ? "PACK TEMPERATURE   --" : "PACK TEMPERATURE   " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; }
 
-    // Drive-mode state: display only; no vehicle mode-changing controls are exposed by the SDK.
-    Rectangle { x: 430px; y: 562px; width: 786px; height: 62px; border-radius: 12px; background: panel; border-width: 1px; border-color: border; }
-    Text { x: 454px; y: 581px; width: 120px; height: 24px; text: "DRIVE MODE"; color: muted; font-size: 14px; font-weight: 600; letter-spacing: 1.5px; }
+    // Drive mode strip.
+    Rectangle { x: 392px; y: 610px; width: 840px; height: 58px; border-radius: 20px; background: glass-deep.with-alpha(0.78); border-width: 1px; border-color: glass-edge.with-alpha(0.65); }
+    Text { x: 416px; y: 628px; width: 130px; height: 22px; text: "DRIVE PROFILE"; color: muted; font-size: 12px; font-weight: 700; letter-spacing: 1.4px; }
+    Rectangle { x: 564px; y: 623px; width: 1px; height: 30px; background: glass-edge.with-alpha(0.6); }
     Text {
-        x: 600px; y: 578px; width: 560px; height: 30px;
+        x: 590px; y: 624px; width: 600px; height: 28px;
         text: Vehicle.mode == DriveMode.eco ? "ECO" : Vehicle.mode == DriveMode.normal ? "NORMAL"
             : Vehicle.mode == DriveMode.sport ? "SPORT" : Vehicle.mode == DriveMode.hyper ? "HYPER"
             : Vehicle.mode == DriveMode.custom ? "CUSTOM" : reversing ? "REVERSE" : parked ? "PARK" : "--";
-        color: ink; font-size: 22px; font-weight: 600; letter-spacing: 2px;
+        color: ink; font-size: 20px; font-weight: 700; letter-spacing: 2px;
     }
 
-    // Bottom dock: media, plugin widget, and host actions.
-    Rectangle { x: 64px; y: 650px; width: 440px; height: 78px; border-radius: 14px; background: panel-raised; border-width: 1px; border-color: border; }
-    Text {
-        x: 84px; y: 662px; width: 300px; height: 28px;
-        text: Media.title == "" ? "Nothing playing" : Media.title;
-        color: ink; font-size: 20px; font-weight: 600; overflow: elide;
-    }
-    Text {
-        x: 84px; y: 692px; width: 300px; height: 22px;
-        text: Media.artist == "" ? "Media" : Media.artist;
-        color: muted; font-size: 15px; overflow: elide;
-    }
-    Rectangle { x: 396px; y: 666px; width: 48px; height: 48px; border-radius: 24px; background: border; }
-    Text { x: 396px; y: 666px; width: 48px; height: 48px; horizontal-alignment: center; vertical-alignment: center; text: Media.playing ? "Ⅱ" : "▶"; color: ink; font-size: 20px; }
-    TouchArea { x: 396px; y: 666px; width: 48px; height: 48px; clicked => { Media.play-pause(); } }
+    // Bottom dock — compact floating glass controls.
+    Rectangle { x: 48px; y: 614px; width: 320px; height: 112px; border-radius: 22px; background: glass.with-alpha(0.78); border-width: 1px; border-color: glass-highlight.with-alpha(0.55); }
+    Rectangle { x: 66px; y: 632px; width: 54px; height: 54px; border-radius: 15px; background: @linear-gradient(135deg, mint-glow.with-alpha(0.65) 0%, glass-deep 100%); }
+    Text { x: 66px; y: 632px; width: 54px; height: 54px; horizontal-alignment: center; vertical-alignment: center; text: "♫"; color: ink; font-size: 27px; font-weight: 600; }
+    Text { x: 136px; y: 632px; width: 210px; height: 28px; text: Media.title == "" ? "Nothing playing" : Media.title; color: ink; font-size: 17px; font-weight: 700; overflow: elide; }
+    Text { x: 136px; y: 662px; width: 210px; height: 22px; text: Media.artist == "" ? "Media player" : Media.artist; color: muted; font-size: 13px; overflow: elide; }
+    Rectangle { x: 136px; y: 692px; width: 188px; height: 3px; border-radius: 2px; background: glass-edge.with-alpha(0.5); }
+    Rectangle { x: 136px; y: 692px; width: Media.playing ? 82px : 18px; height: 3px; border-radius: 2px; background: mint-glow; }
+    TouchArea { x: 48px; y: 614px; width: 320px; height: 112px; clicked => { Media.play-pause(); } }
 
-    if Plugins.widgets.length > 0 : Rectangle {
-        x: 524px; y: 650px; width: 220px; height: 78px;
-        border-radius: 14px; background: panel-raised; border-width: 1px; border-color: border;
-        Text { x: 544px; y: 662px; width: 180px; height: 22px; text: Plugins.widgets[0].title; color: muted; font-size: 14px; overflow: elide; }
-        Text { x: 544px; y: 688px; width: 180px; height: 28px; text: Plugins.widgets[0].value + " " + Plugins.widgets[0].unit; color: ink; font-size: 20px; font-weight: 600; overflow: elide; }
-        TouchArea { x: 524px; y: 650px; width: 220px; height: 78px; clicked => { Plugins.widget-clicked(Plugins.widgets[0].id); } }
-    }
+    Rectangle { x: 392px; y: 686px; width: 840px; height: 40px; border-radius: 20px; background: glass-deep.with-alpha(0.58); border-width: 1px; border-color: glass-edge.with-alpha(0.5); }
+    Text { x: 408px; y: 695px; width: 150px; height: 22px; text: "OLA  /  EV VISION"; color: muted; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; }
+    Text { x: 588px; y: 695px; width: 180px; height: 22px; text: Vehicle.odometer-km < 0 ? "ODO  -- km" : "ODO  " + round(Vehicle.odometer-km) + " km"; color: muted; font-size: 11px; font-weight: 600; }
+    Text { x: 786px; y: 695px; width: 180px; height: 22px; text: Battery.temp-max-c < 0 ? "PACK  --°C" : "PACK  " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 11px; font-weight: 600; }
 
-    Rectangle { x: 768px; y: 650px; width: 142px; height: 78px; border-radius: 14px; background: panel-raised; border-width: 1px; border-color: border-strong; }
-    Text { x: 768px; y: 650px; width: 142px; height: 78px; horizontal-alignment: center; vertical-alignment: center; text: "Android Auto"; color: ink; font-size: 17px; font-weight: 600; }
-    TouchArea { x: 768px; y: 650px; width: 142px; height: 78px; clicked => { Actions.open-android-auto(); } }
+    Rectangle { x: 988px; y: 678px; width: 112px; height: 48px; border-radius: 17px; background: glass.with-alpha(0.88); border-width: 1px; border-color: glass-edge.with-alpha(0.65); }
+    Text { x: 988px; y: 678px; width: 112px; height: 48px; horizontal-alignment: center; vertical-alignment: center; text: "AA  ↗"; color: ink; font-size: 14px; font-weight: 700; }
+    TouchArea { x: 988px; y: 678px; width: 112px; height: 48px; clicked => { Actions.open-android-auto(); } }
 
-    Rectangle {
-        x: 926px; y: 650px; width: 142px; height: 78px; border-radius: 14px;
-        background: trunk-ready || Vehicle.trunk-open ? panel-raised : panel-raised;
-        border-width: 1px; border-color: Vehicle.trunk-open ? danger : border-strong;
-        opacity: trunk-ready || Vehicle.trunk-open ? 1 : 0.4;
-    }
-    // Scooter top-box icon (lid, storage body and latch), not a car boot symbol.
-    Rectangle {
-        x: 971px; y: 659px; width: 52px; height: 7px;
-        border-radius: 3px; background: scooter-trim;
-    }
-    Rectangle {
-        x: 976px; y: 665px; width: 42px; height: 25px;
-        border-radius: 5px; background: border;
-        border-width: 2px; border-color: scooter-trim;
-    }
-    Rectangle {
-        x: 993px; y: 674px; width: 8px; height: 5px;
-        border-radius: 2px; background: danger;
-    }
-    Text {
-        x: 936px; y: 696px; width: 122px; height: 22px;
-        horizontal-alignment: center; vertical-alignment: center;
-        text: Vehicle.trunk-open ? "Trunk open" : "Trunk";
-        color: ink; font-size: 16px; font-weight: 600;
-    }
-    TouchArea { x: 926px; y: 650px; width: 142px; height: 78px; enabled: trunk-ready; clicked => { Actions.open-trunk(); } }
-
-    Rectangle { x: 1084px; y: 650px; width: 132px; height: 78px; border-radius: 14px; background: panel-raised; border-width: 1px; border-color: border-strong; }
-    Text { x: 1084px; y: 650px; width: 132px; height: 78px; horizontal-alignment: center; vertical-alignment: center; text: "Settings"; color: ink; font-size: 17px; font-weight: 600; }
-    TouchArea { x: 1084px; y: 650px; width: 132px; height: 78px; clicked => { Actions.open-settings(); } }
+    Rectangle { x: 1110px; y: 678px; width: 122px; height: 48px; border-radius: 17px; background: trunk-ready || Vehicle.trunk-open ? glass.with-alpha(0.88) : glass-deep.with-alpha(0.55); border-width: 1px; border-color: Vehicle.trunk-open ? red : glass-edge.with-alpha(0.65); opacity: trunk-ready || Vehicle.trunk-open ? 1 : 0.45; }
+    // Scooter top-box glyph: raised lid above a compact storage case.
+    Rectangle { x: 1150px; y: 686px; width: 42px; height: 5px; border-radius: 2px; background: trim; }
+    Rectangle { x: 1154px; y: 691px; width: 34px; height: 17px; border-radius: 4px; background: glass-edge; border-width: 1px; border-color: trim; }
+    Rectangle { x: 1167px; y: 697px; width: 8px; height: 4px; border-radius: 2px; background: red; }
+    Text { x: 1114px; y: 706px; width: 114px; height: 16px; horizontal-alignment: center; text: Vehicle.trunk-open ? "BOX OPEN" : "STORAGE"; color: ink; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
+    TouchArea { x: 1110px; y: 678px; width: 122px; height: 48px; enabled: trunk-ready; clicked => { Actions.open-trunk(); } }
 }
