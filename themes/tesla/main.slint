@@ -137,54 +137,14 @@ export component Dash inherits Window {
     }
     Text { x: 422px; y: 192px; width: 300px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : "YOUR S1 PRO"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 2px; }
     Text { x: 760px; y: 192px; width: 100px; height: 24px; horizontal-alignment: right; text: "GEN  01"; color: faint; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
-    // Soft elliptical showroom pool under the vehicle.
-    Rectangle {
-        x: 466px; y: 448px; width: 352px; height: 34px;
-        border-radius: 17px; background: mint-glow.with-alpha(night ? 0.13 : 0.11);
+    // Real first-generation S1 Pro photo supplied for this theme.
+    // Keep the image inside the hero glass stage; navigation replaces it when active.
+    if !Navigation.active : Image {
+        x: 430px; y: 220px; width: 424px; height: 286px;
+        source: @image-url("assets/ola-s1-neo-mint.jpg");
+        image-fit: contain;
     }
-    Rectangle { x: 430px; y: 472px; width: 424px; height: 1px; background: glass-edge.with-alpha(0.38); }
-
-    // Detailed side profile: separate wheel rings, floorboard, sculpted apron,
-    // curved rear fairing, saddle, headlamp, tail lamp and a scooter top-box.
-    if !Navigation.active : Rectangle {
-        x: 486px; y: 376px; width: 82px; height: 82px; border-radius: 41px;
-        background: black; border-width: 5px; border-color: trim;
-    }
-    if !Navigation.active : Rectangle { x: 504px; y: 394px; width: 46px; height: 46px; border-radius: 23px; background: wheel; border-width: 3px; border-color: night ? #72878b : #91a49c; }
-    if !Navigation.active : Rectangle { x: 522px; y: 412px; width: 10px; height: 10px; border-radius: 5px; background: trim; }
-    if !Navigation.active : Rectangle {
-        x: 746px; y: 376px; width: 82px; height: 82px; border-radius: 41px;
-        background: black; border-width: 5px; border-color: trim;
-    }
-    if !Navigation.active : Rectangle { x: 764px; y: 394px; width: 46px; height: 46px; border-radius: 23px; background: wheel; border-width: 3px; border-color: night ? #72878b : #91a49c; }
-    if !Navigation.active : Rectangle { x: 782px; y: 412px; width: 10px; height: 10px; border-radius: 5px; background: trim; }
-    // Swingarm and low floor.
-    if !Navigation.active : Rectangle { x: 550px; y: 366px; width: 220px; height: 14px; border-radius: 7px; background: trim; }
-    if !Navigation.active : Rectangle { x: 558px; y: 354px; width: 176px; height: 19px; border-radius: 8px; background: mint-deep; }
-    if !Navigation.active : Rectangle { x: 575px; y: 354px; width: 135px; height: 5px; border-radius: 2px; background: #d4fff2.with-alpha(0.75); }
-    // Rear body shell and side panel.
-    if !Navigation.active : Rectangle { x: 658px; y: 308px; width: 132px; height: 76px; border-radius: 26px; background: mint; border-width: 2px; border-color: mint-deep; }
-    if !Navigation.active : Rectangle { x: 676px; y: 318px; width: 94px; height: 8px; border-radius: 4px; background: #e3fff6.with-alpha(0.75); }
-    if !Navigation.active : Text { x: 694px; y: 340px; width: 58px; height: 18px; horizontal-alignment: center; text: "OLA"; color: #24574b; font-size: 13px; font-weight: 700; letter-spacing: 1px; }
-    // Front apron / leg shield, layered to suggest real body curvature.
-    if !Navigation.active : Rectangle { x: 548px; y: 282px; width: 72px; height: 100px; border-radius: 28px; background: mint; border-width: 2px; border-color: mint-deep; }
-    if !Navigation.active : Rectangle { x: 557px; y: 294px; width: 12px; height: 70px; border-radius: 6px; background: #e5fff7.with-alpha(0.78); }
-    if !Navigation.active : Rectangle { x: 608px; y: 324px; width: 62px; height: 38px; border-radius: 16px; background: mint; }
-    // Handlebar, mirror and steering neck.
-    if !Navigation.active : Rectangle { x: 572px; y: 252px; width: 9px; height: 58px; border-radius: 4px; background: trim; }
-    if !Navigation.active : Rectangle { x: 550px; y: 250px; width: 66px; height: 8px; border-radius: 4px; background: trim; }
-    if !Navigation.active : Rectangle { x: 550px; y: 234px; width: 5px; height: 18px; border-radius: 2px; background: trim; }
-    if !Navigation.active : Rectangle { x: 539px; y: 228px; width: 25px; height: 9px; border-radius: 5px; background: black; border-width: 1px; border-color: trim; }
-    // Saddle with a highlight edge.
-    if !Navigation.active : Rectangle { x: 625px; y: 282px; width: 116px; height: 19px; border-radius: 10px; background: black; }
-    if !Navigation.active : Rectangle { x: 638px; y: 282px; width: 84px; height: 3px; border-radius: 2px; background: #87999a; }
-    // Lamp and rear scooter top-box (not a car boot).
-    if !Navigation.active : Rectangle { x: 542px; y: 308px; width: 13px; height: 22px; border-radius: 6px; background: #f2fff9; border-width: 1px; border-color: mint-deep; }
-    if !Navigation.active : Rectangle { x: 780px; y: 324px; width: 12px; height: 18px; border-radius: 5px; background: red; }
-    if !Navigation.active : Rectangle { x: 730px; y: 296px; width: 72px; height: 11px; border-radius: 5px; background: trim; }
-    if !Navigation.active : Rectangle { x: 742px; y: 266px; width: 58px; height: 35px; border-radius: 9px; background: black; border-width: 2px; border-color: trim; }
-    if !Navigation.active : Rectangle { x: 748px; y: 261px; width: 46px; height: 7px; border-radius: 4px; background: night ? #a8b8b8 : #52645e; }
-    if !Navigation.active : Rectangle { x: 750px; y: 275px; width: 42px; height: 2px; background: #d8e9e5.with-alpha(0.6); }
+    Rectangle { x: 430px; y: 482px; width: 424px; height: 1px; background: glass-edge.with-alpha(0.38); }
     if Navigation.active : Text {
         x: 430px; y: 280px; width: 424px; height: 112px;
         text: Navigation.instruction; color: ink; font-size: 30px; font-weight: 600;
@@ -244,10 +204,12 @@ export component Dash inherits Window {
     TouchArea { x: 988px; y: 678px; width: 112px; height: 48px; clicked => { Actions.open-android-auto(); } }
 
     Rectangle { x: 1110px; y: 678px; width: 122px; height: 48px; border-radius: 17px; background: trunk-ready || Vehicle.trunk-open ? glass.with-alpha(0.88) : glass-deep.with-alpha(0.55); border-width: 1px; border-color: Vehicle.trunk-open ? red : glass-edge.with-alpha(0.65); opacity: trunk-ready || Vehicle.trunk-open ? 1 : 0.45; }
-    // Scooter top-box glyph: raised lid above a compact storage case.
-    Rectangle { x: 1150px; y: 686px; width: 42px; height: 5px; border-radius: 2px; background: trim; }
-    Rectangle { x: 1154px; y: 691px; width: 34px; height: 17px; border-radius: 4px; background: glass-edge; border-width: 1px; border-color: trim; }
-    Rectangle { x: 1167px; y: 697px; width: 8px; height: 4px; border-radius: 2px; background: red; }
-    Text { x: 1114px; y: 706px; width: 114px; height: 16px; horizontal-alignment: center; text: Vehicle.trunk-open ? "BOX OPEN" : "STORAGE"; color: ink; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
+    // Factory-style scooter boot/storage icon: open hinged lid and deep compartment.
+    Rectangle { x: 1156px; y: 696px; width: 30px; height: 13px; border-radius: 3px; background: glass-edge; border-width: 1px; border-color: trim; }
+    Rectangle { x: 1159px; y: 699px; width: 24px; height: 2px; background: glass-highlight; }
+    Rectangle { x: 1155px; y: 690px; width: 31px; height: 4px; border-radius: 2px; background: Vehicle.trunk-open ? red : trim; }
+    Rectangle { x: 1157px; y: 687px; width: 26px; height: 3px; border-radius: 1px; background: trim; }
+    Rectangle { x: 1168px; y: 693px; width: 5px; height: 3px; border-radius: 1px; background: ink; }
+    Text { x: 1114px; y: 710px; width: 114px; height: 13px; horizontal-alignment: center; text: Vehicle.trunk-open ? "BOOT OPEN" : "BOOT"; color: ink; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
     TouchArea { x: 1110px; y: 678px; width: 122px; height: 48px; enabled: trunk-ready; clicked => { Actions.open-trunk(); } }
 }
