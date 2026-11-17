@@ -75,8 +75,8 @@ export component Dash inherits Window {
         color: ink; font-size: 40px; font-weight: 700; letter-spacing: -1px;
     }
     Text {
-        x: 50px; y: 116px; width: 260px; height: 24px;
-        text: Vehicle.data-stale ? "VEHICLE DATA UNAVAILABLE" : "OLA ELECTRIC  /  S1";
+        x: 50px; y: 116px; width: 390px; height: 24px;
+        text: Vehicle.data-stale ? "VEHICLE DATA UNAVAILABLE" : "SUPER SCOOTER S1 PRO";
         color: Vehicle.data-stale ? red : muted; font-size: 15px; font-weight: 700; letter-spacing: 2px;
     }
     Rectangle {
@@ -135,8 +135,8 @@ export component Dash inherits Window {
         x: 394px; y: 168px; width: 496px; height: 2px;
         border-radius: 1px; background: glass-highlight.with-alpha(0.7);
     }
-    Text { x: 422px; y: 192px; width: 300px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : "YOUR S1 PRO"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
-    Text { x: 760px; y: 192px; width: 100px; height: 24px; horizontal-alignment: right; text: "GEN  01"; color: faint; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
+    Text { x: 422px; y: 192px; width: 330px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : "MIDHUN SANKAR'S S1 PRO"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
+    Text { x: 760px; y: 192px; width: 100px; height: 24px; horizontal-alignment: right; text: "4 KWH"; color: faint; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
     // Real first-generation S1 Pro photo supplied for this theme.
     // Keep the image inside the hero glass stage; navigation replaces it when active.
     if !Navigation.active : Image {
@@ -155,7 +155,7 @@ export component Dash inherits Window {
         text: Navigation.distance + "   ·   " + Navigation.eta;
         color: mint-glow; font-size: 24px; font-weight: 700;
     }
-    Text { x: 422px; y: 520px; width: 440px; height: 22px; text: Navigation.active ? "FOLLOW THE ROUTE" : "NEO MINT  /  FIRST GENERATION"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 1.6px; }
+    Text { x: 422px; y: 520px; width: 440px; height: 22px; text: Navigation.active ? "FOLLOW THE ROUTE" : "NEO MINT BLUE"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 1.6px; }
 
     // Battery and range stack: glass tiles with crisp information hierarchy.
     Rectangle { x: 916px; y: 166px; width: 316px; height: 198px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: glass-highlight.with-alpha(0.62); }
