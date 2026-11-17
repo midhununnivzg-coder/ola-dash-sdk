@@ -1,5 +1,6 @@
 package dev.olatool.dash;
 
+import android.app.AlertDialog;
 import android.app.NativeActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -34,6 +35,38 @@ public final class MainActivity extends NativeActivity {
     private static final long TEST_MAX_MS = 10 * 60_000L;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private volatile boolean firstFrameRendered;
+    private final Runnable startupWatchdog = () -> {
+        if (!firstFrameRendered) {
+            showStartupMessage("Ola Dash started, but the native dashboard did not draw its first frame within 15 seconds. This diagnostic build is checking the Android graphics and Slint startup path.");
+        }
+    };
+
+    /** Called by Rust after Slint has successfully presented the first dashboard frame. */
+    public void onNativeFirstFrame() {
+        handler.post(() -> {
+            firstFrameRendered = true;
+            handler.removeCallbacks(startupWatchdog);
+        });
+    }
+
+    /** Called by Rust when native initialisation or dashboard construction fails. */
+    public void onNativeStartupError(String message) {
+        handler.post(() -> {
+            firstFrameRendered = true;
+            handler.removeCallbacks(startupWatchdog);
+            showStartupMessage(message);
+        });
+    }
+
+    private void showStartupMessage(String message) {
+        if (isFinishing() || isDestroyed()) return;
+        new AlertDialog.Builder(this)
+                .setTitle("Ola Dash startup diagnostic")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
+    }
     private final Runnable testOff = () -> VehicleBridge.setTestMode(false);
     private BroadcastReceiver testReceiver;
     static volatile boolean paused;
@@ -81,6 +114,7 @@ public final class MainActivity extends NativeActivity {
         // Bad-theme guard: strike the active theme before Slint can crash on it (cleared below).
         Log.i(TAG, "theme guard: " + BadThemeGuard.strike(getFilesDir()));
         super.onCreate(state);
+        handler.postDelayed(startupWatchdog, 15_000L);
         handler.postDelayed(BadThemeGuard::cleanExit, 10_000L); // survived 10 s
         // Unverified until M-sleep (session A): does the locked panel still sleep with this flag?
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
