@@ -278,6 +278,7 @@ fn apply_range_prediction(ui: &ComponentInstance, id: usize, v: f64) {
     let mut predictor = RANGE_PREDICTOR.lock().unwrap();
     let changed = match id {
         RANGE_KM => { predictor.set_range(v); true }
+        BATTERY_PCT => { predictor.set_battery_pct(v); true }
         ODO_KM => { predictor.set_odometer(v); true }
         SOC_PCT => { predictor.set_fine_soc(v); true }
         CHARGING => { predictor.set_charging(v != 0.0); true }
