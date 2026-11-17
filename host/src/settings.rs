@@ -227,6 +227,9 @@ fn apply_preferences(
         .map_err(|e| format!("HostState.clock24: {e:?}"))?;
     ui.set_global_property("HostState", "brightness-pct", Value::Number(brightness as f64))
         .map_err(|e| format!("HostState.brightness-pct: {e:?}"))?;
+    let window_brightness = brightness.max(system_brightness);
+    ui.set_global_property("HostState", "brightness-window-pct", Value::Number(window_brightness as f64))
+        .map_err(|e| format!("HostState.brightness-window-pct: {e:?}"))?;
     refresh_clock(ui);
     refresh_night(ui)
 }
@@ -241,16 +244,16 @@ pub fn bind(
 ) -> Result<(), String> {
     apply_preferences(ui, &settings, refresh_clock, system_brightness)?;
     let set_brightness: Rc<dyn Fn(u32)> = Rc::new(set_brightness);
-    if let Some(percent) = settings.borrow().brightness() {
-        set_brightness(percent);
-    }
+    let initial_brightness = settings.borrow().brightness().unwrap_or(system_brightness);
+    set_brightness(initial_brightness.max(system_brightness));
     let weak = ui.as_weak();
     ui.set_callback("set-setting", move |args| {
         if let [Value::String(key), Value::String(value)] = args {
             let saved = settings.borrow_mut().set(key.as_str(), value.as_str());
             let result = saved.and_then(|_| {
                 if key.as_str() == "brightness" {
-                    set_brightness(settings.borrow().brightness().unwrap_or(system_brightness));
+                    let requested = settings.borrow().brightness().unwrap_or(system_brightness);
+                    set_brightness(requested.max(system_brightness));
                 }
                 if key != "setup" {
                     if let Some(ui) = weak.upgrade() {

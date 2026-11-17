@@ -201,6 +201,13 @@ export component Host inherits Window {
             }
         }
     }
+    // Dim app content when the requested level is below the Android window baseline.
+    // The host safety overlay is drawn after this layer and stays fully visible.
+    if HostState.brightness-window-pct > HostState.brightness-pct : Rectangle {
+        width: parent.width; height: parent.height;
+        background: #000000;
+        opacity: 1.0 - HostState.brightness-pct * 1.0 / HostState.brightness-window-pct;
+    }
     HostOverlay {
         width: parent.width; height: parent.height;
         unlock-key(key) => { root.unlock-key(key); }

@@ -36,6 +36,7 @@ public final class MainActivity extends NativeActivity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private volatile boolean firstFrameRendered;
+    private volatile int requestedBrightness = -1;
     private final Runnable startupWatchdog = () -> {
         if (!firstFrameRendered) {
             showStartupMessage("Ola Dash started, but the native dashboard did not draw its first frame within 15 seconds. This diagnostic build is checking the Android graphics and Slint startup path.");
@@ -98,13 +99,20 @@ public final class MainActivity extends NativeActivity {
     }
 
     /** Applies a per-window brightness override; Android restores system brightness outside this app. */
+    private void applyWindowBrightness(int percent) {
+        if (isFinishing() || isDestroyed()) return;
+        WindowManager.LayoutParams params = getWindow().getAttributes();
+        params.screenBrightness = percent / 100.0f;
+        getWindow().setAttributes(params);
+        getWindow().getDecorView().invalidate();
+    }
+
     public void onSetBrightness(int percent) {
         final int bounded = Math.max(10, Math.min(100, percent));
-        handler.post(() -> {
-            WindowManager.LayoutParams params = getWindow().getAttributes();
-            params.screenBrightness = bounded / 100.0f;
-            getWindow().setAttributes(params);
-        });
+        requestedBrightness = bounded;
+        Runnable apply = () -> applyWindowBrightness(bounded);
+        if (Looper.myLooper() == Looper.getMainLooper()) apply.run();
+        else handler.post(apply);
     }
 
     /** Called synchronously by Rust before a theme-switch process exit. */
@@ -179,6 +187,7 @@ public final class MainActivity extends NativeActivity {
     protected void onResume() {
         super.onResume();
         paused = false;
+        if (requestedBrightness >= 0) applyWindowBrightness(requestedBrightness);
     }
 
     @Override

@@ -258,9 +258,6 @@ export component SettingsScreen inherits Rectangle {
             x: 0px; y: 0px; width: parent.width; height: parent.body-height;
             for field[i] in [
                 { label: "Model label", value: Display.dashboard-model-title, key: "dashboard-model-title" },
-                { label: "Colour", value: Display.dashboard-color, key: "dashboard-color" },
-                { label: "Battery pack", value: Display.dashboard-capacity, key: "dashboard-capacity" },
-                { label: "Owner name", value: Display.dashboard-owner-title, key: "dashboard-owner-title" },
             ] : DashboardTextField {
                 x: 0px; y: i * 64px; width: parent.width; height: 56px;
                 label: field.label;
@@ -269,8 +266,8 @@ export component SettingsScreen inherits Rectangle {
                 commit(key, value) => { root.set-setting(key, value); }
             }
             HostText {
-                x: 4px; y: 264px; width: parent.width - 8px; height: 24px;
-                text: "Tap a field to edit. Press Done or move to another field to save.";
+                x: 4px; y: 72px; width: parent.width - 8px; height: 24px;
+                text: "Only the model label can be edited.";
                 color: LockConfig.style.muted;
                 font-size: 15px;
             }
