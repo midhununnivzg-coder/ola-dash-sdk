@@ -15,6 +15,8 @@ export component ThemeList inherits Flickable {
     in-out property <string> selection;
     content-width: self.width;
     content-height: max(self.height, root.themes.length * 112px - 16px);
+    // Keep the active theme visibly selected whenever the list is first opened.
+    init => { root.selection = root.active-theme; }
     for theme[i] in root.themes : Rectangle {
         x: 0px; y: i * 112px; width: parent.width; height: 96px;
         border-radius: 24px;
