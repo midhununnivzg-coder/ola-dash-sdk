@@ -38,6 +38,7 @@ export component Dash inherits Window {
     property <float> battery-shown: max(0, Vehicle.battery-pct);
     animate battery-shown { duration: 700ms; easing: ease-in-out; }
     property <float> battery-fraction: clamp(battery-shown / 100, 0, 1);
+    property <float> media-progress: Media.duration-ms > 0 ? clamp(Media.position-ms / Media.duration-ms, 0, 1) : 0;
 
     out property <OverlayPlacement> overlay-placement: OverlayPlacement.top;
     out property <[Telltale]> telltale-order: [
@@ -191,7 +192,10 @@ export component Dash inherits Window {
     Rectangle { x: 62px; y: 630px; width: 48px; height: 48px; border-radius: 14px; background: @linear-gradient(135deg, mint-glow.with-alpha(0.65) 0%, glass-deep 100%); }
     Text { x: 62px; y: 630px; width: 48px; height: 48px; horizontal-alignment: center; vertical-alignment: center; text: "♫"; color: ink; font-size: 27px; font-weight: 700; }
     Text { x: 124px; y: 628px; width: 204px; height: 25px; text: Media.title == "" ? "Nothing playing" : Media.title; color: ink; font-size: 18px; font-weight: 700; overflow: elide; }
-    Text { x: 124px; y: 654px; width: 204px; height: 20px; text: Media.artist == "" ? "Media player" : Media.artist; color: muted; font-size: 14px; font-weight: 700; overflow: elide; }
+    Text { x: 124px; y: 652px; width: 204px; height: 20px; text: Media.artist == "" ? "Media player" : Media.artist; color: muted; font-size: 14px; font-weight: 700; overflow: elide; }
+    // Live playback position, refreshed twice per second from Android's active media session.
+    Rectangle { x: 62px; y: 677px; width: 266px; height: 3px; border-radius: 2px; background: glass-edge.with-alpha(0.65); }
+    Rectangle { x: 62px; y: 677px; width: 266px * media-progress; height: 3px; border-radius: 2px; background: mint-glow; }
     // Dedicated transport and system-volume controls.
     Rectangle { x: 62px; y: 686px; width: 266px; height: 28px; border-radius: 14px; background: glass-deep.with-alpha(0.78); border-width: 1px; border-color: glass-edge.with-alpha(0.5); }
     Text { x: 70px; y: 687px; width: 36px; height: 26px; horizontal-alignment: center; vertical-alignment: center; text: "−"; color: ink; font-size: 22px; font-weight: 800; }
