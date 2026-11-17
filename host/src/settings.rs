@@ -70,6 +70,13 @@ impl Settings {
             Err(e) if e.kind() == io::ErrorKind::NotFound => {}
             Err(e) => log(&format!("settings: {e}; using defaults")),
         }
+        // Migrate the previous built-in scooter title to the requested user-name default.
+        if settings.values.get("dashboard-model-title").and_then(Json::as_str) == Some("SUPER SCOOTER S1 PRO") {
+            settings.values.insert("dashboard-model-title".into(), Json::String("MIDHUN SANKAR".into()));
+            if let Err(e) = write(path, &settings.values) {
+                log(&format!("settings: user-name migration could not be saved: {e}"));
+            }
+        }
         settings
     }
 
@@ -201,7 +208,7 @@ fn apply_preferences(
         (
             s.night(), s.night_start(), s.night_end(), s.clock24(), s.brightness().unwrap_or(system_brightness),
             [
-                ("dashboard-model-title", s.dashboard_text("dashboard-model-title", "SUPER SCOOTER S1 PRO")),
+                ("dashboard-model-title", s.dashboard_text("dashboard-model-title", "MIDHUN SANKAR")),
                 ("dashboard-color", s.dashboard_text("dashboard-color", "NEO MINT BLUE")),
                 ("dashboard-capacity", s.dashboard_text("dashboard-capacity", "4 KWH")),
                 ("dashboard-owner-title", s.dashboard_text("dashboard-owner-title", "MIDHUN SANKAR'S S1 PRO")),
