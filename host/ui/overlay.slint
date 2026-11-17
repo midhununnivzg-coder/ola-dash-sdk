@@ -189,7 +189,7 @@ component TelltaleStrip inherits Rectangle {
         t == Telltale.left-indicator ? "LEFT"
             : t == Telltale.right-indicator ? "RIGHT"
             : t == Telltale.high-beam ? "HIGH"
-            : t == Telltale.headlight ? "LAMP"
+            : t == Telltale.headlight ? "LOW"
             : t == Telltale.ready ? "READY"
             : t == Telltale.locked ? "LOCK"
             : t == Telltale.side-stand ? "STAND"
@@ -213,7 +213,7 @@ component TelltaleStrip inherits Rectangle {
         visible: !self.hidden-telltale;
         x: root.vertical ? (root.width - self.width) / 2
             : t == Telltale.left-indicator ? OverlayTokens.slot-pad
-            : t == Telltale.right-indicator ? root.width - OverlayTokens.slot-pad - self.width
+            : t == Telltale.right-indicator ? root.width - OverlayTokens.slot-pad - self.width - 80px
             : (root.width - 4 * pitch) / 2 + self.middle-offset;
         y: root.vertical
             ? (t == Telltale.left-indicator ? OverlayTokens.slot-pad

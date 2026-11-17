@@ -27,26 +27,16 @@ export struct ThemeOptionInfo {
     swatches: [OptionSwatch],
 }
 
-// A field owns its editable draft. The host only receives a debounced save, so its
-// Display property refresh cannot reset TextInput or dismiss Android's soft keyboard.
+// Keep edits local while the Android IME is active. Saving on a short debounce
+// refreshed the host Display model mid-typing and could dismiss the soft keyboard.
 component DashboardTextField inherits Rectangle {
     in property <string> label;
     in property <string> key;
     in property <string> value;
     callback commit(string, string);
     property <string> draft: root.value;
-    property <bool> save-pending: false;
 
-    Timer {
-        interval: 700ms;
-        running: root.save-pending;
-        triggered => {
-            root.save-pending = false;
-            root.commit(root.key, root.draft);
-        }
-    }
-
-    border-radius: 18px;
+    border-radius: 16px;
     border-width: 1px;
     border-color: LockConfig.style.key-border;
     background: LockConfig.style.key-background;
@@ -54,27 +44,31 @@ component DashboardTextField inherits Rectangle {
         x: 18px; y: 0px; width: 166px; height: parent.height;
         text: root.label;
         color: LockConfig.style.foreground;
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 700;
         vertical-alignment: center;
         overflow: elide;
     }
     Rectangle {
-        x: 190px; y: 10px; width: parent.width - 204px; height: 60px;
-        border-radius: 14px;
+        x: 190px; y: 6px; width: parent.width - 204px; height: 44px;
+        border-radius: 12px;
         border-width: 1px;
         border-color: LockConfig.style.key-border;
         background: LockConfig.style.background;
         TextInput {
             x: 12px; y: 0px; width: parent.width - 24px; height: parent.height;
-            text: root.draft;
+            text <=> root.draft;
             color: LockConfig.style.foreground;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             vertical-alignment: center;
-            edited => {
-                root.draft = self.text;
-                root.save-pending = true;
+            accepted => {
+                if root.draft != root.value { root.commit(root.key, root.draft); }
+            }
+            changed has-focus => {
+                if !self.has-focus && root.draft != root.value {
+                    root.commit(root.key, root.draft);
+                }
             }
         }
     }
@@ -232,17 +226,17 @@ export component SettingsScreen inherits Rectangle {
                 { label: "Battery pack", value: Display.dashboard-capacity, key: "dashboard-capacity" },
                 { label: "Owner name", value: Display.dashboard-owner-title, key: "dashboard-owner-title" },
             ] : DashboardTextField {
-                x: 0px; y: i * 96px; width: parent.width; height: 80px;
+                x: 0px; y: i * 64px; width: parent.width; height: 56px;
                 label: field.label;
                 value: field.value;
                 key: field.key;
                 commit(key, value) => { root.set-setting(key, value); }
             }
             HostText {
-                x: 4px; y: 394px; width: parent.width - 8px; height: 28px;
-                text: "Tap any field to edit. Changes save automatically.";
+                x: 4px; y: 264px; width: parent.width - 8px; height: 24px;
+                text: "Tap a field to edit. Press Done or move to another field to save.";
                 color: LockConfig.style.muted;
-                font-size: 17px;
+                font-size: 15px;
             }
         }
     }
