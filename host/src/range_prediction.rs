@@ -146,7 +146,7 @@ impl RangeEstimator {
             return;
         }
 
-        if distance - self.last_update_distance_km >= 0.8 {
+        if distance - self.last_update_distance_km + 1e-9 >= 0.8 {
             self.last_update_distance_km +=
                 ((distance - self.last_update_distance_km) / 0.8).floor() * 0.8;
             if consumed > 0.05 && distance > 0.05 {
@@ -224,7 +224,7 @@ mod tests {
         r.set_fine_soc(78.5);
         assert_eq!(r.predicted_range(), Some(first));
         r.set_trip(2.8);
-        assert!((r.predicted_range().unwrap() - (2.8 / 1.0 * 78.5)).abs() < 0.001);
+        assert!((r.predicted_range().unwrap() - (2.8 / 1.5 * 78.5)).abs() < 0.001);
     }
 
     #[test]
