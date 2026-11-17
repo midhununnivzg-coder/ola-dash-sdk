@@ -257,7 +257,7 @@ export component SettingsScreen inherits Rectangle {
         Rectangle {
             x: 0px; y: 0px; width: parent.width; height: parent.body-height;
             for field[i] in [
-                { label: "Model label", value: Display.dashboard-model-title, key: "dashboard-model-title" },
+                { label: "User Name", value: Display.dashboard-model-title, key: "dashboard-model-title" },
             ] : DashboardTextField {
                 x: 0px; y: i * 64px; width: parent.width; height: 56px;
                 label: field.label;
@@ -267,7 +267,7 @@ export component SettingsScreen inherits Rectangle {
             }
             HostText {
                 x: 4px; y: 72px; width: parent.width - 8px; height: 24px;
-                text: "Only the model label can be edited.";
+                text: "Only the user name can be edited.";
                 color: LockConfig.style.muted;
                 font-size: 15px;
             }
