@@ -13,7 +13,7 @@
 //          v6 overlay-placement, telltale-order, overlay-style, alert-position (optional Dash props),
 //             trunk-open, Actions.open-trunk | v6 also: lock-style (optional Dash prop, lock screen) |
 //          v7 Display.night, Vehicle.data-stale, Actions.open-apps, Actions.open-themes |
-//          v8 editable dashboard labels in Display
+//          v8 editable dashboard labels in Display; v9 predicted range and calibration state
 
 export enum DriveMode { eco, normal, sport, hyper, unknown, park, reverse, custom, easy-park }
 
@@ -66,6 +66,9 @@ export global Vehicle {
     // -1 until the vehicle reports a value; themes should show "--".
     in property <int> battery-pct: -1;
     in property <int> range-km: -1;
+    // Live efficiency-based estimate, initially mirroring range-km until 2 km or 2% SoC is used.
+    in property <float> predicted-range-km: -1;
+    in property <bool> range-calibrated: false;
     in property <DriveMode> mode: DriveMode.unknown;
     // False when the owner app revoked Hyper (mode button then cycles to Custom).
     in property <bool> hyper-available: true;

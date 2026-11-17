@@ -18,6 +18,7 @@ use slint::{ModelRc, VecModel};
 use slint_interpreter::{Compiler, ComponentHandle, ComponentInstance, Value};
 
 mod plugins;
+mod range_prediction;
 mod settings;
 mod theme_options;
 mod theme_root;
@@ -80,7 +81,7 @@ const FALLBACK: &str = "fallback"; // bundled copy of themes/default
 const LAST_RESORT: &str = "last-resort"; // bundled placeholder, cannot fail to compile
 const HEADUNIT_PKG: &str = "com.andrerinas.headunitrevived";
 /// Highest contract version this host implements (contract/vehicle.slint `contract-version`).
-const HOST_CONTRACT: i64 = 8;
+const HOST_CONTRACT: i64 = 9;
 
 /// Latest value per field, coalesced until the UI thread applies it.
 static PENDING: Mutex<[Option<f64>; SLOTS]> = Mutex::new([None; SLOTS]);
@@ -91,6 +92,8 @@ static LAST_HHMM: AtomicU32 = AtomicU32::new(u32::MAX);
 static TOUCHED: AtomicBool = AtomicBool::new(false);
 /// Latest plugin snapshot from PluginHost.java (JSON), applied on the UI thread.
 static PLUGINS: Mutex<Option<String>> = Mutex::new(None);
+static RANGE_PREDICTOR: Mutex<range_prediction::RangeEstimator> =
+    Mutex::new(range_prediction::RangeEstimator::new());
 
 /// Called once a second by the Java keep-alive tick; reading clears the flag.
 #[unsafe(no_mangle)]
@@ -271,7 +274,31 @@ fn dash_action(app: &AndroidApp, action: &str) {
     }
 }
 
+fn apply_range_prediction(ui: &ComponentInstance, id: usize, v: f64) {
+    let mut predictor = RANGE_PREDICTOR.lock().unwrap();
+    let changed = match id {
+        RANGE_KM => { predictor.set_range(v); true }
+        TRIP_KM => { predictor.set_trip(v); true }
+        BATTERY_PCT => { predictor.set_rounded_soc(v); true }
+        SOC_PCT => { predictor.set_fine_soc(v); true }
+        CHARGING => { predictor.set_charging(v != 0.0); true }
+        TEST_MODE => { predictor.reset(); true }
+        _ => false,
+    };
+    if changed {
+        let value = predictor.predicted_range().unwrap_or(-1.0);
+        let calibrated = predictor.is_calibrated();
+        if let Err(e) = ui.set_global_property("Vehicle", "predicted-range-km", Value::Number(value)) {
+            log::warn!("set Vehicle.predicted-range-km failed: {e:?}");
+        }
+        if let Err(e) = ui.set_global_property("Vehicle", "range-calibrated", Value::Bool(calibrated)) {
+            log::warn!("set Vehicle.range-calibrated failed: {e:?}");
+        }
+    }
+}
+
 fn apply(ui: &ComponentInstance, id: usize, v: f64) {
+    apply_range_prediction(ui, id, v);
     let b = Value::Bool(v != 0.0);
     let n = Value::Number(v);
     let (global, prop, val) = match id {

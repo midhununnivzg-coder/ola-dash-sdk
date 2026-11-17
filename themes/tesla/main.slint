@@ -126,33 +126,44 @@ export component Dash inherits Window {
     Text { x: 444px; y: 492px; width: 416px; height: 54px; text: "" + round(Vehicle.trip-km * 10) / 10 + " km"; color: ink; font-size: 32px; font-weight: 700; horizontal-alignment: center; }
     Text { font-weight: 700; x: 444px; y: 554px; width: 416px; height: 22px; visible: parked; text: "TAP POWER TO BEGIN YOUR RIDE"; color: faint; font-size: 15px; horizontal-alignment: center; }
 
-    // Hero glass stage with the mint S1 silhouette.
+    // Live predicted-range panel replaces the scooter photo.
     Rectangle {
         x: 48px; y: 166px; width: 320px; height: 360px;
         border-radius: 30px; background: glass.with-alpha(0.52);
         border-width: 1px; border-color: card-edge;
     }
-    Text { x: 70px; y: 192px; width: 205px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : Display.dashboard-owner-title; color: muted; font-size: 12px; font-weight: 700; letter-spacing: 1px; overflow: elide; }
-    Text { x: 282px; y: 192px; width: 66px; height: 24px; horizontal-alignment: right; text: Display.dashboard-capacity; color: faint; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
-    // Real first-generation S1 Pro photo supplied for this theme.
-    // Keep the image inside the compact left hero stage; navigation replaces it when active.
-    if !Navigation.active : Image {
-        x: 82px; y: 218px; width: 252px; height: 222px;
-        source: @image-url("assets/ola-s1-neo-mint.jpg");
-        image-fit: contain;
+    Text {
+        x: 72px; y: 198px; width: 272px; height: 30px;
+        text: "PREDICTED RANGE";
+        color: muted; font-size: 17px; font-weight: 800;
+        letter-spacing: 2px; horizontal-alignment: center;
     }
-    Rectangle { x: 72px; y: 454px; width: 272px; height: 1px; background: card-edge.with-alpha(0.42); }
-    if Navigation.active : Text {
-        x: 72px; y: 270px; width: 272px; height: 100px;
-        text: Navigation.instruction; color: ink; font-size: 25px; font-weight: 700;
-        wrap: word-wrap; overflow: elide;
+    Text {
+        x: 72px; y: 258px; width: 272px; height: 112px;
+        text: Vehicle.predicted-range-km < 0 ? "--" : "" + round(Vehicle.predicted-range-km);
+        color: ink; font-size: 94px; font-weight: 700;
+        letter-spacing: -4px; horizontal-alignment: center;
+        vertical-alignment: center;
     }
-    if Navigation.active : Text {
-        x: 72px; y: 382px; width: 272px; height: 38px;
-        text: Navigation.distance + "   ·   " + Navigation.eta;
-        color: mint-glow; font-size: 20px; font-weight: 700;
+    Text {
+        x: 72px; y: 366px; width: 272px; height: 32px;
+        text: "km"; color: muted; font-size: 23px; font-weight: 700;
+        horizontal-alignment: center;
     }
-    Text { x: 72px; y: 480px; width: 272px; height: 22px; text: Navigation.active ? "FOLLOW THE ROUTE" : Display.dashboard-color; color: muted; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; }
+    Rectangle { x: 72px; y: 420px; width: 272px; height: 1px; background: card-edge.with-alpha(0.55); }
+    Text {
+        x: 72px; y: 442px; width: 272px; height: 22px;
+        text: Vehicle.range-calibrated ? "LIVE RIDE EFFICIENCY" : "RANGE TAB BASELINE";
+        color: Vehicle.range-calibrated ? mint-glow : muted;
+        font-size: 13px; font-weight: 800; letter-spacing: 1px;
+        horizontal-alignment: center;
+    }
+    Text {
+        x: 72px; y: 476px; width: 272px; height: 22px;
+        text: Vehicle.range-calibrated ? "REFRESHED EVERY 1 KM" : "CALIBRATING · 2 KM OR 2%";
+        color: faint; font-size: 11px; font-weight: 700;
+        letter-spacing: 0.6px; horizontal-alignment: center;
+    }
 
     // Battery and range stack: glass tiles with crisp information hierarchy.
     Rectangle { x: 916px; y: 166px; width: 316px; height: 198px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: card-edge; }
@@ -162,7 +173,7 @@ export component Dash inherits Window {
     Rectangle { x: 944px; y: 334px; width: 260px; height: 8px; border-radius: 4px; background: glass-edge.with-alpha(0.45); }
     Rectangle { x: 944px; y: 334px; width: 260px * battery-fraction; height: 8px; border-radius: 4px; background: battery-shown < 15 ? red : mint-glow; }
     Rectangle { x: 916px; y: 386px; width: 316px; height: 204px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: card-edge; }
-    Text { x: 944px; y: 412px; width: 240px; height: 22px; text: "ESTIMATED RANGE"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
+    Text { x: 944px; y: 412px; width: 240px; height: 22px; text: "RANGE TAB ESTIMATE"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
     Text { x: 940px; y: 448px; width: 190px; height: 82px; text: Vehicle.range-km < 0 ? "--" : "" + Vehicle.range-km; color: ink; font-size: 74px; font-weight: 700; letter-spacing: -3px; }
     Text { x: 1090px; y: 492px; width: 90px; height: 28px; text: "km"; color: muted; font-size: 22px; font-weight: 700; }
     Text { x: 944px; y: 548px; width: 250px; height: 20px; text: Battery.temp-max-c < 0 ? "BATTERY TEMP   --" : "BATTERY TEMP   " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 0.8px; }
