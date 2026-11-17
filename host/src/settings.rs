@@ -75,8 +75,9 @@ impl Settings {
 
     pub fn night(&self) -> NightMode {
         match self.values.get("night").and_then(Json::as_str) {
+            Some("off") => NightMode::Off,
             Some("on") => NightMode::On,
-            Some("auto") => NightMode::Auto,
+            Some("auto") | None => NightMode::Auto,
             _ => NightMode::Auto,
         }
     }
