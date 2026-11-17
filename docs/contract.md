@@ -54,7 +54,7 @@ Theme options are an additive part of contract 7, with no version bump: an optio
 
 | Property | Type | Default | Notes |
 |---|---|---|---|
-| `contract-version` | `out int` | 7 | Read-only. The contract version the theme was compiled against. |
+| `contract-version` | `out int` | 9 | Read-only. The contract version the theme was compiled against. |
 | `speed-kmh` | `in float` | 0 | km/h |
 | `battery-pct` | `in int` | -1 | Rounded state of charge, %. Use `Battery.soc-pct` for the fine value. |
 | `range-km` | `in int` | -1 | Original estimated range from the vehicle's Range tab, km |

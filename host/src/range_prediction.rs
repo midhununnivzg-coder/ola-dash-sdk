@@ -10,7 +10,6 @@ pub struct RangeEstimator {
     range_km: Option<f64>,
     trip_km: Option<f64>,
     fine_soc_pct: Option<f64>,
-    rounded_soc_pct: Option<f64>,
     baseline_trip_km: Option<f64>,
     baseline_soc_pct: Option<f64>,
     baseline_range_km: Option<f64>,
@@ -26,7 +25,6 @@ impl RangeEstimator {
             range_km: None,
             trip_km: None,
             fine_soc_pct: None,
-            rounded_soc_pct: None,
             baseline_trip_km: None,
             baseline_soc_pct: None,
             baseline_range_km: None,
@@ -63,11 +61,6 @@ impl RangeEstimator {
         self.refresh();
     }
 
-    pub fn set_rounded_soc(&mut self, value: f64) {
-        self.rounded_soc_pct = valid_soc(value);
-        self.refresh();
-    }
-
     pub fn set_charging(&mut self, charging: bool) {
         if charging && !self.charging {
             self.clear_calibration();
@@ -85,7 +78,7 @@ impl RangeEstimator {
     }
 
     fn current_soc(&self) -> Option<f64> {
-        self.fine_soc_pct.or(self.rounded_soc_pct)
+        self.fine_soc_pct
     }
 
     fn clear_calibration(&mut self) {
