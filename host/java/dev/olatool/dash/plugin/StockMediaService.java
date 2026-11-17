@@ -1,6 +1,8 @@
 package dev.olatool.dash.plugin;
 
 import android.content.ComponentName;
+import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
@@ -110,6 +112,15 @@ public final class StockMediaService extends NotificationListenerService {
     private static boolean isPlaying(MediaController c) {
         PlaybackState s = c.getPlaybackState();
         return s != null && s.getState() == PlaybackState.STATE_PLAYING;
+    }
+
+    /** Adjusts Android's music stream volume in small system-controlled steps. */
+    static void adjustVolume(Context context, String action) {
+        AudioManager audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        if (audio == null) return;
+        int direction = "media.volume-up".equals(action)
+                ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER;
+        audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, AudioManager.FLAG_SHOW_UI);
     }
 
     /** Transport control for the active session. Called on the main thread by PluginHost. */
