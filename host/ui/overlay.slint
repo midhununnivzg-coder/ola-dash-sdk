@@ -205,8 +205,18 @@ component TelltaleStrip inherits Rectangle {
             ? (root.labels ? OverlayTokens.slot-pitch-labels-v : OverlayTokens.slot-pitch)
             : (root.labels ? OverlayTokens.slot-pitch-labels : OverlayTokens.slot-pitch);
         property <bool> lit: root.is-on(t);
-        x: root.vertical ? (root.width - self.width) / 2 : OverlayTokens.slot-pad + i * pitch;
-        y: root.vertical ? OverlayTokens.slot-pad + i * pitch : (root.height - self.height) / 2;
+        property <bool> hidden-telltale: t == Telltale.fault || t == Telltale.locked || t == Telltale.side-stand;
+        property <length> middle-offset: (i - 2) * pitch;
+        visible: !self.hidden-telltale;
+        x: root.vertical ? (root.width - self.width) / 2
+            : t == Telltale.left-indicator ? OverlayTokens.slot-pad
+            : t == Telltale.right-indicator ? root.width - OverlayTokens.slot-pad - self.width
+            : (root.width - 4 * pitch) / 2 + self.middle-offset;
+        y: root.vertical
+            ? (t == Telltale.left-indicator ? OverlayTokens.slot-pad
+                : t == Telltale.right-indicator ? root.height - OverlayTokens.slot-pad - self.height - (root.labels ? 22px : 0px)
+                : (root.height - 4 * pitch) / 2 + self.middle-offset)
+            : (root.height - self.height) / 2;
         width: OverlayTokens.slot;
         height: OverlayTokens.slot;
         opacity: self.lit && root.is-blinker(t) && !root.blink-on ? 0.25 : 1;
@@ -218,18 +228,19 @@ component TelltaleStrip inherits Rectangle {
             y: (parent.height - self.height) / 2;
         }
         if root.labels && !root.vertical : HostText {
-            x: OverlayTokens.slot + 6px;
+            x: t == Telltale.right-indicator ? -80px : OverlayTokens.slot + 6px;
             width: 74px;
             height: parent.height;
             text: root.label-of(t);
             color: OverlayConfig.foreground;
             font-size: 16px;
             font-weight: 700;
+            horizontal-alignment: t == Telltale.right-indicator ? right : left;
             vertical-alignment: center;
         }
         if root.labels && root.vertical : HostText {
             x: (parent.width - self.width) / 2;
-            y: OverlayTokens.slot + 2px;
+            y: t == Telltale.right-indicator ? -22px : OverlayTokens.slot + 2px;
             width: 72px;
             text: root.label-of(t);
             color: OverlayConfig.foreground;
@@ -297,7 +308,7 @@ component AlertCard inherits Rectangle {
 export component HostOverlay inherits Rectangle {
     callback unlock-key(int);
     callback open-hub();
-    property <bool> hub-visible: HostState.parked && HostState.alert-code == 0
+    property <bool> hub-visible: HostState.parked && root.shown-alert-code == 0
         && !root.unlock-visible && !HostState.test-mode && !HostState.data-stale;
     // Keep the opaque lock screen over the dash until PARK/DRIVE/charge is stable.
     // A transient vehicle-state callback must never expose the dashboard for one frame.
@@ -313,21 +324,32 @@ export component HostOverlay inherits Rectangle {
             }
         }
     }
-    property <string> alert-title: HostState.alert-code == 1 ? "FALL OR ACCIDENT DETECTED"
-        : HostState.alert-code == 2 ? "TOW / THEFT ALERT"
-        : HostState.alert-code == 3 ? "SIDE STAND DOWN"
-        : HostState.alert-code == 4 ? "STEERING LOCK ALERT"
-        : HostState.alert-code == 5 ? "VEHICLE FAULT" : "LOW BATTERY";
-    property <string> alert-hint: HostState.alert-code == 1 ? "Check rider and scooter"
-        : HostState.alert-code == 2 ? "Scooter moved while locked"
-        : HostState.alert-code == 3 ? "Raise the stand to ride"
-        : HostState.alert-code == 4 ? "Unlock the steering before riding"
-        : HostState.alert-code == 5 ? "Stop when safe" : "Charge soon";
+    // Latch the side-stand warning after the BCM's brief power+brake alert pulse.
+    // The alert remains readable for a full three seconds even if the source clears.
+    property <bool> side-stand-hold: HostState.alert-code == 3;
+    Timer {
+        interval: 3s;
+        running: root.side-stand-hold;
+        repeated: false;
+        triggered => { root.side-stand-hold = false; }
+    }
+    property <int> shown-alert-code: HostState.alert-code != 0
+        ? HostState.alert-code : (root.side-stand-hold ? 3 : 0);
+    property <string> alert-title: root.shown-alert-code == 1 ? "FALL OR ACCIDENT DETECTED"
+        : root.shown-alert-code == 2 ? "TOW / THEFT ALERT"
+        : root.shown-alert-code == 3 ? "SIDE STAND DOWN"
+        : root.shown-alert-code == 4 ? "STEERING LOCK ALERT"
+        : root.shown-alert-code == 5 ? "VEHICLE FAULT" : "LOW BATTERY";
+    property <string> alert-hint: root.shown-alert-code == 1 ? "Check rider and scooter"
+        : root.shown-alert-code == 2 ? "Scooter moved while locked"
+        : root.shown-alert-code == 3 ? "Raise the stand to ride"
+        : root.shown-alert-code == 4 ? "Unlock the steering before riding"
+        : root.shown-alert-code == 5 ? "Stop when safe" : "Charge soon";
     // Side stand and low battery are amber; the rest are red.
-    property <bool> alert-amber: HostState.alert-code == 3 || HostState.alert-code == 6;
-    property <Telltale> alert-icon: HostState.alert-code == 3 ? Telltale.side-stand
-        : (HostState.alert-code == 2 || HostState.alert-code == 4) ? Telltale.locked
-        : HostState.alert-code == 6 ? Telltale.charging : Telltale.fault;
+    property <bool> alert-amber: root.shown-alert-code == 3 || root.shown-alert-code == 6;
+    property <Telltale> alert-icon: root.shown-alert-code == 3 ? Telltale.side-stand
+        : (root.shown-alert-code == 2 || root.shown-alert-code == 4) ? Telltale.locked
+        : root.shown-alert-code == 6 ? Telltale.charging : Telltale.fault;
 
     // Strip and content region, from the theme's placement (host-fixed sizes).
     property <bool> vertical: OverlayConfig.placement == OverlayPlacement.left || OverlayConfig.placement == OverlayPlacement.right;
@@ -344,8 +366,12 @@ export component HostOverlay inherits Rectangle {
         if root.code == 0 {
             root.dismissed = 0;
         }
+        if root.code == 3 {
+            root.side-stand-hold = true;
+        }
     }
-    property <bool> scrim-visible: !root.unlock-visible && HostState.alert-code != 0 && HostState.alert-code != root.dismissed;
+    property <bool> scrim-visible: !root.unlock-visible
+        && root.shown-alert-code != 0 && root.shown-alert-code != root.dismissed;
 
     // After a theme restart the lock state is unknown until the first callback (phase 0):
     // keep the switching card instead of flashing the lock screen, unless the retry key is needed.
@@ -382,7 +408,7 @@ export component HostOverlay inherits Rectangle {
 
     // While entering a PIN or parked, warnings stay visible in the lock screen's left column
     // (104 px in, 444 px wide) so they never trap the user behind the keypad.
-    if root.unlock-visible && HostState.alert-code != 0 : Rectangle {
+    if root.unlock-visible && root.shown-alert-code != 0 : Rectangle {
         x: 104px;
         y: root.height - OverlayTokens.strip-h - 32px - self.height;
         width: 444px;
@@ -415,8 +441,8 @@ export component HostOverlay inherits Rectangle {
         background: OverlayTokens.scrim;
         TouchArea {
             clicked => {
-                if HostState.alert-code >= 5 {
-                    root.dismissed = HostState.alert-code;
+                if root.shown-alert-code >= 5 {
+                    root.dismissed = root.shown-alert-code;
                 }
             }
         }
@@ -462,9 +488,9 @@ export component HostOverlay inherits Rectangle {
                : OverlayConfig.alert-position == AlertPosition.lower ? 0.75 : 0.5);
         title: root.alert-title;
         hint: root.alert-hint;
-        code: HostState.alert-code;
+        code: root.shown-alert-code;
         icon: root.alert-icon;
-        dismissable: HostState.alert-code >= 5;
+        dismissable: root.shown-alert-code >= 5;
         amber: root.alert-amber;
     }
 

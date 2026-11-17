@@ -27,6 +27,60 @@ export struct ThemeOptionInfo {
     swatches: [OptionSwatch],
 }
 
+// A field owns its editable draft. The host only receives a debounced save, so its
+// Display property refresh cannot reset TextInput or dismiss Android's soft keyboard.
+component DashboardTextField inherits Rectangle {
+    in property <string> label;
+    in property <string> key;
+    in property <string> value;
+    callback commit(string, string);
+    property <string> draft: root.value;
+    property <bool> save-pending: false;
+
+    Timer {
+        interval: 700ms;
+        running: root.save-pending;
+        repeated: false;
+        triggered => {
+            root.save-pending = false;
+            root.commit(root.key, root.draft);
+        }
+    }
+
+    border-radius: 18px;
+    border-width: 1px;
+    border-color: LockConfig.style.key-border;
+    background: LockConfig.style.key-background;
+    HostText {
+        x: 18px; y: 0px; width: 166px; height: parent.height;
+        text: root.label;
+        color: LockConfig.style.foreground;
+        font-size: 20px;
+        font-weight: 700;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+    Rectangle {
+        x: 190px; y: 10px; width: parent.width - 204px; height: 60px;
+        border-radius: 14px;
+        border-width: 1px;
+        border-color: LockConfig.style.key-border;
+        background: LockConfig.style.background;
+        TextInput {
+            x: 12px; y: 0px; width: parent.width - 24px; height: parent.height;
+            text: root.draft;
+            color: LockConfig.style.foreground;
+            font-size: 20px;
+            font-weight: 700;
+            vertical-alignment: center;
+            edited => {
+                root.draft = self.text;
+                root.save-pending = true;
+            }
+        }
+    }
+}
+
 // Interactive host screen: parked only, enforced by Host in theme_root.rs.
 export component SettingsScreen inherits Rectangle {
     callback closed();
@@ -178,37 +232,12 @@ export component SettingsScreen inherits Rectangle {
                 { label: "Colour", value: Display.dashboard-color, key: "dashboard-color" },
                 { label: "Battery pack", value: Display.dashboard-capacity, key: "dashboard-capacity" },
                 { label: "Owner name", value: Display.dashboard-owner-title, key: "dashboard-owner-title" },
-            ] : Rectangle {
+            ] : DashboardTextField {
                 x: 0px; y: i * 96px; width: parent.width; height: 80px;
-                border-radius: 18px;
-                border-width: 1px;
-                border-color: LockConfig.style.key-border;
-                background: LockConfig.style.key-background;
-                HostText {
-                    x: 18px; y: 0px; width: 166px; height: parent.height;
-                    text: field.label;
-                    color: LockConfig.style.foreground;
-                    font-size: 20px;
-                    font-weight: 700;
-                    vertical-alignment: center;
-                    overflow: elide;
-                }
-                Rectangle {
-                    x: 190px; y: 10px; width: parent.width - 204px; height: 60px;
-                    border-radius: 14px;
-                    border-width: 1px;
-                    border-color: LockConfig.style.key-border;
-                    background: LockConfig.style.background;
-                    TextInput {
-                        x: 12px; y: 0px; width: parent.width - 24px; height: parent.height;
-                        text: field.value;
-                        color: LockConfig.style.foreground;
-                        font-size: 20px;
-                        font-weight: 700;
-                        vertical-alignment: center;
-                        edited => { root.set-setting(field.key, self.text); }
-                    }
-                }
+                label: field.label;
+                value: field.value;
+                key: field.key;
+                commit(key, value) => { root.set-setting(key, value); }
             }
             HostText {
                 x: 4px; y: 394px; width: parent.width - 8px; height: 28px;

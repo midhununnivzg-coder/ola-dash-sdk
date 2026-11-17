@@ -43,8 +43,8 @@ export component Dash inherits Window {
     out property <OverlayPlacement> overlay-placement: OverlayPlacement.top;
     out property <[Telltale]> telltale-order: [
         Telltale.left-indicator, Telltale.right-indicator, Telltale.ready,
-        Telltale.high-beam, Telltale.headlight, Telltale.side-stand,
-        Telltale.fault, Telltale.locked, Telltale.charging,
+        Telltale.high-beam, Telltale.headlight, Telltale.charging,
+        Telltale.side-stand, Telltale.fault, Telltale.locked,
     ];
     out property <OverlayStyle> overlay-style: {
         background: page, foreground: ink, corner-radius: 12px, show-labels: true,
@@ -104,7 +104,7 @@ export component Dash inherits Window {
         x: 412px; y: 118px; width: 5px; height: 480px;
         border-radius: 2px; background: charging ? mint-glow : night ? #91a9b4 : #83b8aa;
     }
-    Text { x: 444px; y: 150px; width: 416px; height: 26px; text: charging ? "STATE OF CHARGE" : "LIVE SPEED"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
+    Text { x: 444px; y: 150px; width: 416px; height: 26px; text: charging ? "STATE OF CHARGE" : "LIVE SPEED"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; horizontal-alignment: center; }
     Text {
         x: 436px; y: 205px; width: 432px; height: 200px;
         horizontal-alignment: center; vertical-alignment: center;
@@ -118,6 +118,7 @@ export component Dash inherits Window {
         text: charging ? "CHARGING" : parked ? "PARKED" : reversing ? "REVERSE" : easy-parking ? "EASY PARK" : "km/h";
         color: charging ? mint-glow : reversing || easy-parking ? amber : muted;
         font-size: 22px; font-weight: 700; letter-spacing: 2px;
+        horizontal-alignment: center;
     }
     Rectangle { x: 444px; y: 442px; width: 416px; height: 1px; background: glass-edge.with-alpha(0.55); }
     Text { x: 444px; y: 462px; width: 416px; height: 22px; text: "TRIP DISTANCE"; horizontal-alignment: center; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; }
