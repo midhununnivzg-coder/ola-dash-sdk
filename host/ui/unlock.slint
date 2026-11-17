@@ -44,9 +44,9 @@ component Key inherits Rectangle {
         : LockConfig.style.key-shape == LockKeyShape.square ? 4px : 0px;
     border-width: root.grid || root.quiet || root.strong ? 0px : 1px;
     border-color: LockConfig.style.key-border;
-    // Disabled keys fade toward the screen; pressed keys lean toward the text colour.
+    // Keep key surfaces visually stable; TouchArea still handles taps, but transient
+    // pressed-state updates must not flash the keypad on touchscreens with noisy input.
     background: !root.enabled ? (root.quiet && !root.grid ? transparent : root.fill.mix(LockConfig.style.background, 0.5))
-         : touch.pressed ? root.fill.mix(root.ink, 0.15).with-alpha(0.88)
         : root.fill.with-alpha(0.80);
     accessible-role: button;
     accessible-label: label;
