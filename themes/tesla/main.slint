@@ -129,35 +129,35 @@ export component Dash inherits Window {
 
     // Hero glass stage with the mint S1 silhouette.
     Rectangle {
-        x: 48px; y: 166px; width: 500px; height: 424px;
+        x: 48px; y: 166px; width: 320px; height: 424px;
         border-radius: 30px; background: glass.with-alpha(0.52);
         border-width: 1px; border-color: glass-highlight.with-alpha(0.55);
     }
     Rectangle {
-        x: 50px; y: 168px; width: 496px; height: 2px;
+        x: 50px; y: 168px; width: 316px; height: 2px;
         border-radius: 1px; background: glass-highlight.with-alpha(0.7);
     }
-    Text { x: 78px; y: 192px; width: 330px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : "MIDHUN SANKAR'S S1 PRO"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
-    Text { x: 416px; y: 192px; width: 100px; height: 24px; horizontal-alignment: right; text: "4 KWH"; color: faint; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
+    Text { x: 70px; y: 192px; width: 205px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : "MIDHUN SANKAR'S S1 PRO"; color: muted; font-size: 12px; font-weight: 700; letter-spacing: 1px; overflow: elide; }
+    Text { x: 282px; y: 192px; width: 66px; height: 24px; horizontal-alignment: right; text: "4 KWH"; color: faint; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
     // Real first-generation S1 Pro photo supplied for this theme.
-    // Keep the image inside the hero glass stage; navigation replaces it when active.
+    // Keep the image inside the compact left hero stage; navigation replaces it when active.
     if !Navigation.active : Image {
-        x: 86px; y: 220px; width: 424px; height: 286px;
+        x: 72px; y: 220px; width: 272px; height: 286px;
         source: @image-url("assets/ola-s1-neo-mint.jpg");
         image-fit: contain;
     }
-    Rectangle { x: 86px; y: 482px; width: 424px; height: 1px; background: glass-edge.with-alpha(0.38); }
+    Rectangle { x: 72px; y: 482px; width: 272px; height: 1px; background: glass-edge.with-alpha(0.38); }
     if Navigation.active : Text {
-        x: 86px; y: 280px; width: 424px; height: 112px;
-        text: Navigation.instruction; color: ink; font-size: 32px; font-weight: 700;
+        x: 72px; y: 280px; width: 272px; height: 112px;
+        text: Navigation.instruction; color: ink; font-size: 25px; font-weight: 700;
         wrap: word-wrap; overflow: elide;
     }
     if Navigation.active : Text {
-        x: 86px; y: 414px; width: 424px; height: 38px;
+        x: 72px; y: 414px; width: 272px; height: 38px;
         text: Navigation.distance + "   ·   " + Navigation.eta;
-        color: mint-glow; font-size: 24px; font-weight: 700;
+        color: mint-glow; font-size: 20px; font-weight: 700;
     }
-    Text { x: 78px; y: 520px; width: 440px; height: 22px; text: Navigation.active ? "FOLLOW THE ROUTE" : "NEO MINT BLUE"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 1.6px; }
+    Text { x: 72px; y: 520px; width: 272px; height: 22px; text: Navigation.active ? "FOLLOW THE ROUTE" : "NEO MINT BLUE"; color: muted; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; }
 
     // Battery and range stack: glass tiles with crisp information hierarchy.
     Rectangle { x: 916px; y: 166px; width: 316px; height: 198px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: glass-highlight.with-alpha(0.62); }
