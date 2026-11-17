@@ -498,7 +498,7 @@ fn wire(ui: &ComponentInstance, app: &AndroidApp) -> Result<(), String> {
     })
     .map_err(err)?;
     // Media and widget taps go to the plugin host (display-only; it routes to the owner).
-    for name in ["play-pause", "next", "previous"] {
+    for name in ["play-pause", "next", "previous", "volume-up", "volume-down"] {
         let a = app.clone();
         ui.set_global_callback("Media", name, move |_| {
             dash_action(&a, &format!("media.{name}"));
