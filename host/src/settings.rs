@@ -100,6 +100,12 @@ impl Settings {
         self.values.get("clock24").and_then(Json::as_bool).unwrap_or(true)
     }
 
+    fn dashboard_text(&self, key: &str, default: &str) -> String {
+        self.values.get(key).and_then(Json::as_str)
+            .filter(|value| value.chars().count() <= 48 && !value.chars().any(char::is_control))
+            .unwrap_or(default).to_string()
+    }
+
     pub fn setup_done(&self) -> bool {
         self.values.get("setup").and_then(Json::as_str) == Some("done")
     }
@@ -127,6 +133,8 @@ impl Settings {
                 Json::from(minutes)
             }
             ("clock24", "true" | "false") => Json::Bool(value == "true"),
+            ("dashboard-model-title" | "dashboard-color" | "dashboard-capacity" | "dashboard-owner-title", _)
+                if value.chars().count() <= 48 && !value.chars().any(char::is_control) => Json::String(value.into()),
             ("setup", "done") => Json::String(value.into()),
             _ => return Err(format!("settings: invalid {key}={value}")),
         };
@@ -172,9 +180,17 @@ pub fn refresh_night(ui: &ComponentInstance) -> Result<(), String> {
 
 fn apply_preferences(ui: &ComponentInstance, settings: &SharedSettings, refresh_clock: fn(&ComponentInstance)) -> Result<(), String> {
     // Release the shared borrow before updating any UI property or callback.
-    let (mode, start, end, clock24) = {
+    let (mode, start, end, clock24, dashboard_labels) = {
         let s = settings.borrow();
-        (s.night(), s.night_start(), s.night_end(), s.clock24())
+        (
+            s.night(), s.night_start(), s.night_end(), s.clock24(),
+            [
+                ("dashboard-model-title", s.dashboard_text("dashboard-model-title", "SUPER SCOOTER S1 PRO")),
+                ("dashboard-color", s.dashboard_text("dashboard-color", "NEO MINT BLUE")),
+                ("dashboard-capacity", s.dashboard_text("dashboard-capacity", "4 KWH")),
+                ("dashboard-owner-title", s.dashboard_text("dashboard-owner-title", "MIDHUN SANKAR'S S1 PRO")),
+            ],
+        )
     };
     for (prop, value) in [("night-mode", mode as i32 as f64), ("night-start", start as f64), ("night-end", end as f64)] {
         ui.set_global_property("HostState", prop, Value::Number(value))
@@ -184,6 +200,10 @@ fn apply_preferences(ui: &ComponentInstance, settings: &SharedSettings, refresh_
         let text = clock_text(minutes / 60 * 100 + minutes % 60, clock24);
         ui.set_global_property("HostState", prop, Value::String(text.into()))
             .map_err(|e| format!("HostState.{prop}: {e:?}"))?;
+    }
+    for (key, value) in dashboard_labels {
+        ui.set_global_property("Display", key, Value::String(value.into()))
+            .map_err(|e| format!("Display.{key}: {e:?}"))?;
     }
     ui.set_property("clock24", Value::Bool(clock24))
         .map_err(|e| format!("clock24: {e:?}"))?;

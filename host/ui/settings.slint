@@ -1,4 +1,4 @@
-import { Vehicle } from "vehicle.slint";
+import { Vehicle, Display } from "vehicle.slint";
 import { HostState } from "overlay.slint";
 import { LockConfig } from "unlock.slint";
 import { HostText } from "hosttext.slint";
@@ -43,7 +43,7 @@ export component SettingsScreen inherits Rectangle {
     in property <string> active-theme;
     in property <bool> clock24: true;
     in-out property <int> selected: 0;
-    property <[string]> panes: ["Display", "Theme", "Plugins", "About"];
+    property <[string]> panes: ["Display", "Dashboard", "Theme", "Plugins", "About"];
     property <string> pane: panes[selected];
     in-out property <int> cursor: 0;
     property <string> theme-selection;
@@ -165,6 +165,56 @@ export component SettingsScreen inherits Rectangle {
                     selected: root.clock24 ? 0 : 1;
                     chosen(index) => { root.set-setting("clock24", index == 0 ? "true" : "false"); }
                 }
+            }
+        }
+    }
+    if root.pane == "Dashboard" : Pane {
+        x: 432px; y: 88px; width: root.width - 640px; height: root.height - 248px;
+        title: "Edit Dashboard";
+        Rectangle {
+            x: 0px; y: 0px; width: parent.width; height: parent.body-height;
+            for field[i] in [
+                { label: "Model label", value: Display.dashboard-model-title, key: "dashboard-model-title" },
+                { label: "Colour", value: Display.dashboard-color, key: "dashboard-color" },
+                { label: "Battery pack", value: Display.dashboard-capacity, key: "dashboard-capacity" },
+                { label: "Owner name", value: Display.dashboard-owner-title, key: "dashboard-owner-title" },
+            ] : Rectangle {
+                x: 0px; y: i * 96px; width: parent.width; height: 80px;
+                border-radius: 18px;
+                border-width: 1px;
+                border-color: LockConfig.style.key-border;
+                background: LockConfig.style.key-background;
+                HostText {
+                    x: 18px; y: 0px; width: 166px; height: parent.height;
+                    text: field.label;
+                    color: LockConfig.style.foreground;
+                    font-size: 20px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                Rectangle {
+                    x: 190px; y: 10px; width: parent.width - 204px; height: 60px;
+                    border-radius: 14px;
+                    border-width: 1px;
+                    border-color: LockConfig.style.key-border;
+                    background: LockConfig.style.background;
+                    TextInput {
+                        x: 12px; y: 0px; width: parent.width - 24px; height: parent.height;
+                        text: field.value;
+                        color: LockConfig.style.foreground;
+                        font-size: 20px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                        edited => { root.set-setting(field.key, self.text); }
+                    }
+                }
+            }
+            HostText {
+                x: 4px; y: 394px; width: parent.width - 8px; height: 28px;
+                text: "Tap any field to edit. Changes save automatically.";
+                color: LockConfig.style.muted;
+                font-size: 17px;
             }
         }
     }

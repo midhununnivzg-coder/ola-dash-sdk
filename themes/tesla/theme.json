@@ -1,10 +1,10 @@
 {
   "id": "tesla",
   "name": "EV Vision",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "author": "Ola Dash community",
   "license": "GPL-3.0-or-later",
-  "contract": 7,
+  "contract": 8,
   "entry": "main.slint",
   "description": "Premium glassmorphism EV cockpit with layered translucent surfaces, ambient lighting, a Neo Mint first-generation Ola S1 scooter, scooter top-box controls, and automatic day/night palettes."
 }

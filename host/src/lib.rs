@@ -80,7 +80,7 @@ const FALLBACK: &str = "fallback"; // bundled copy of themes/default
 const LAST_RESORT: &str = "last-resort"; // bundled placeholder, cannot fail to compile
 const HEADUNIT_PKG: &str = "com.andrerinas.headunitrevived";
 /// Highest contract version this host implements (contract/vehicle.slint `contract-version`).
-const HOST_CONTRACT: i64 = 7;
+const HOST_CONTRACT: i64 = 8;
 
 /// Latest value per field, coalesced until the UI thread applies it.
 static PENDING: Mutex<[Option<f64>; SLOTS]> = Mutex::new([None; SLOTS]);

@@ -12,7 +12,8 @@
 //          v5 VehicleState, Battery, Ride, Navigation, Plugins; -1 = not reported yet |
 //          v6 overlay-placement, telltale-order, overlay-style, alert-position (optional Dash props),
 //             trunk-open, Actions.open-trunk | v6 also: lock-style (optional Dash prop, lock screen) |
-//          v7 Display.night, Vehicle.data-stale, Actions.open-apps, Actions.open-themes
+//          v7 Display.night, Vehicle.data-stale, Actions.open-apps, Actions.open-themes |
+//          v8 editable dashboard labels in Display
 
 export enum DriveMode { eco, normal, sport, hyper, unknown, park, reverse, custom, easy-park }
 
@@ -59,7 +60,7 @@ export struct OverlayStyle {
 }
 
 export global Vehicle {
-    out property <int> contract-version: 7;
+    out property <int> contract-version: 8;
 
     in property <float> speed-kmh;
     // -1 until the vehicle reports a value; themes should show "--".
@@ -152,6 +153,11 @@ export global Plugins {
 export global Display {
     // True when it is dark (forced or scheduled Auto mode); themes may switch to a night palette.
     in property <bool> night;
+    // User-editable labels for the dashboard, persisted by the host.
+    in property <string> dashboard-model-title: "SUPER SCOOTER S1 PRO";
+    in property <string> dashboard-color: "NEO MINT BLUE";
+    in property <string> dashboard-capacity: "4 KWH";
+    in property <string> dashboard-owner-title: "MIDHUN SANKAR'S S1 PRO";
 }
 
 // Harmless actions, plus one gated vehicle request. Other vehicle commands
