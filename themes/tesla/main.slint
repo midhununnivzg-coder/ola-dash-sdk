@@ -95,21 +95,21 @@ export component Dash inherits Window {
 
     // Speed glass module — layered translucent surfaces and a restrained accent rail.
     Rectangle {
-        x: 48px; y: 166px; width: 320px; height: 424px;
+        x: 392px; y: 166px; width: 320px; height: 424px;
         border-radius: 28px; background: glass-deep.with-alpha(0.72);
         border-width: 1px; border-color: glass-edge.with-alpha(0.72);
     }
     Rectangle {
-        x: 50px; y: 168px; width: 316px; height: 2px;
+        x: 394px; y: 168px; width: 316px; height: 2px;
         border-radius: 1px; background: glass-highlight.with-alpha(0.48);
     }
     Rectangle {
-        x: 48px; y: 166px; width: 5px; height: 424px;
+        x: 392px; y: 166px; width: 5px; height: 424px;
         border-radius: 2px; background: charging ? mint-glow : night ? #91a9b4 : #83b8aa;
     }
-    Text { x: 76px; y: 192px; width: 240px; height: 24px; text: charging ? "STATE OF CHARGE" : "LIVE SPEED"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
+    Text { x: 420px; y: 192px; width: 240px; height: 24px; text: charging ? "STATE OF CHARGE" : "LIVE SPEED"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
     Text {
-        x: 70px; y: 248px; width: 276px; height: 174px;
+        x: 414px; y: 248px; width: 276px; height: 174px;
         horizontal-alignment: left; vertical-alignment: center;
         text: charging ? (Vehicle.battery-pct < 0 ? "--" : "" + round(battery-shown))
             : parked ? "P" : reversing ? "R" : "" + round(speed-shown);
@@ -117,47 +117,47 @@ export component Dash inherits Window {
         font-weight: 700; letter-spacing: -7px;
     }
     Text {
-        x: 80px; y: 412px; width: 240px; height: 30px;
+        x: 424px; y: 412px; width: 240px; height: 30px;
         text: charging ? "CHARGING" : parked ? "PARKED" : reversing ? "REVERSE" : easy-parking ? "EASY PARK" : "km/h";
         color: charging ? mint-glow : reversing || easy-parking ? amber : muted;
         font-size: 22px; font-weight: 700; letter-spacing: 2px;
     }
-    Rectangle { x: 80px; y: 464px; width: 256px; height: 1px; background: glass-edge.with-alpha(0.55); }
-    Text { x: 80px; y: 482px; width: 120px; height: 20px; text: "TRIP DISTANCE"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; }
-    Text { x: 80px; y: 510px; width: 200px; height: 42px; text: "" + round(Vehicle.trip-km * 10) / 10 + " km"; color: ink; font-size: 32px; font-weight: 700; }
-    Text { font-weight: 700; x: 80px; y: 558px; width: 250px; height: 20px; visible: parked; text: "Tap power to begin your ride"; color: faint; font-size: 15px; }
+    Rectangle { x: 424px; y: 464px; width: 256px; height: 1px; background: glass-edge.with-alpha(0.55); }
+    Text { x: 424px; y: 482px; width: 120px; height: 20px; text: "TRIP DISTANCE"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; }
+    Text { x: 424px; y: 510px; width: 200px; height: 42px; text: "" + round(Vehicle.trip-km * 10) / 10 + " km"; color: ink; font-size: 32px; font-weight: 700; }
+    Text { font-weight: 700; x: 424px; y: 558px; width: 250px; height: 20px; visible: parked; text: "Tap power to begin your ride"; color: faint; font-size: 15px; }
 
     // Hero glass stage with the mint S1 silhouette.
     Rectangle {
-        x: 392px; y: 166px; width: 500px; height: 424px;
+        x: 48px; y: 166px; width: 500px; height: 424px;
         border-radius: 30px; background: glass.with-alpha(0.52);
         border-width: 1px; border-color: glass-highlight.with-alpha(0.55);
     }
     Rectangle {
-        x: 394px; y: 168px; width: 496px; height: 2px;
+        x: 50px; y: 168px; width: 496px; height: 2px;
         border-radius: 1px; background: glass-highlight.with-alpha(0.7);
     }
-    Text { x: 422px; y: 192px; width: 330px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : "MIDHUN SANKAR'S S1 PRO"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
-    Text { x: 760px; y: 192px; width: 100px; height: 24px; horizontal-alignment: right; text: "4 KWH"; color: faint; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
+    Text { x: 78px; y: 192px; width: 330px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : "MIDHUN SANKAR'S S1 PRO"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
+    Text { x: 416px; y: 192px; width: 100px; height: 24px; horizontal-alignment: right; text: "4 KWH"; color: faint; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
     // Real first-generation S1 Pro photo supplied for this theme.
     // Keep the image inside the hero glass stage; navigation replaces it when active.
     if !Navigation.active : Image {
-        x: 430px; y: 220px; width: 424px; height: 286px;
+        x: 86px; y: 220px; width: 424px; height: 286px;
         source: @image-url("assets/ola-s1-neo-mint.jpg");
         image-fit: contain;
     }
-    Rectangle { x: 430px; y: 482px; width: 424px; height: 1px; background: glass-edge.with-alpha(0.38); }
+    Rectangle { x: 86px; y: 482px; width: 424px; height: 1px; background: glass-edge.with-alpha(0.38); }
     if Navigation.active : Text {
-        x: 430px; y: 280px; width: 424px; height: 112px;
+        x: 86px; y: 280px; width: 424px; height: 112px;
         text: Navigation.instruction; color: ink; font-size: 32px; font-weight: 700;
         wrap: word-wrap; overflow: elide;
     }
     if Navigation.active : Text {
-        x: 430px; y: 414px; width: 424px; height: 38px;
+        x: 86px; y: 414px; width: 424px; height: 38px;
         text: Navigation.distance + "   ·   " + Navigation.eta;
         color: mint-glow; font-size: 24px; font-weight: 700;
     }
-    Text { x: 422px; y: 520px; width: 440px; height: 22px; text: Navigation.active ? "FOLLOW THE ROUTE" : "NEO MINT BLUE"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 1.6px; }
+    Text { x: 78px; y: 520px; width: 440px; height: 22px; text: Navigation.active ? "FOLLOW THE ROUTE" : "NEO MINT BLUE"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 1.6px; }
 
     // Battery and range stack: glass tiles with crisp information hierarchy.
     Rectangle { x: 916px; y: 166px; width: 316px; height: 198px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: glass-highlight.with-alpha(0.62); }
@@ -188,13 +188,22 @@ export component Dash inherits Window {
 
     // Bottom dock — compact floating glass controls.
     Rectangle { x: 48px; y: 614px; width: 320px; height: 112px; border-radius: 22px; background: glass.with-alpha(0.78); border-width: 1px; border-color: glass-highlight.with-alpha(0.55); }
-    Rectangle { x: 66px; y: 632px; width: 54px; height: 54px; border-radius: 15px; background: @linear-gradient(135deg, mint-glow.with-alpha(0.65) 0%, glass-deep 100%); }
-    Text { x: 66px; y: 632px; width: 54px; height: 54px; horizontal-alignment: center; vertical-alignment: center; text: "♫"; color: ink; font-size: 29px; font-weight: 700; }
-    Text { x: 136px; y: 632px; width: 210px; height: 28px; text: Media.title == "" ? "Nothing playing" : Media.title; color: ink; font-size: 19px; font-weight: 700; overflow: elide; }
-    Text { font-weight: 700; x: 136px; y: 662px; width: 210px; height: 22px; text: Media.artist == "" ? "Media player" : Media.artist; color: muted; font-size: 15px; overflow: elide; }
-    Rectangle { x: 136px; y: 692px; width: 188px; height: 3px; border-radius: 2px; background: glass-edge.with-alpha(0.5); }
-    Rectangle { x: 136px; y: 692px; width: Media.playing ? 82px : 18px; height: 3px; border-radius: 2px; background: mint-glow; }
-    TouchArea { x: 48px; y: 614px; width: 320px; height: 112px; clicked => { Media.play-pause(); } }
+    Rectangle { x: 62px; y: 630px; width: 48px; height: 48px; border-radius: 14px; background: @linear-gradient(135deg, mint-glow.with-alpha(0.65) 0%, glass-deep 100%); }
+    Text { x: 62px; y: 630px; width: 48px; height: 48px; horizontal-alignment: center; vertical-alignment: center; text: "♫"; color: ink; font-size: 27px; font-weight: 700; }
+    Text { x: 124px; y: 628px; width: 204px; height: 25px; text: Media.title == "" ? "Nothing playing" : Media.title; color: ink; font-size: 18px; font-weight: 700; overflow: elide; }
+    Text { x: 124px; y: 654px; width: 204px; height: 20px; text: Media.artist == "" ? "Media player" : Media.artist; color: muted; font-size: 14px; font-weight: 700; overflow: elide; }
+    // Dedicated transport and system-volume controls.
+    Rectangle { x: 62px; y: 686px; width: 266px; height: 28px; border-radius: 14px; background: glass-deep.with-alpha(0.78); border-width: 1px; border-color: glass-edge.with-alpha(0.5); }
+    Text { x: 70px; y: 687px; width: 36px; height: 26px; horizontal-alignment: center; vertical-alignment: center; text: "−"; color: ink; font-size: 22px; font-weight: 800; }
+    TouchArea { x: 66px; y: 685px; width: 44px; height: 30px; clicked => { Media.volume-down(); } }
+    Text { x: 116px; y: 687px; width: 42px; height: 26px; horizontal-alignment: center; vertical-alignment: center; text: "◀|"; color: ink; font-size: 15px; font-weight: 800; }
+    TouchArea { x: 112px; y: 685px; width: 48px; height: 30px; clicked => { Media.previous(); } }
+    Text { x: 164px; y: 687px; width: 42px; height: 26px; horizontal-alignment: center; vertical-alignment: center; text: Media.playing ? "Ⅱ" : "▶"; color: mint-glow; font-size: 18px; font-weight: 800; }
+    TouchArea { x: 160px; y: 685px; width: 48px; height: 30px; clicked => { Media.play-pause(); } }
+    Text { x: 212px; y: 687px; width: 42px; height: 26px; horizontal-alignment: center; vertical-alignment: center; text: "|▶"; color: ink; font-size: 15px; font-weight: 800; }
+    TouchArea { x: 208px; y: 685px; width: 48px; height: 30px; clicked => { Media.next(); } }
+    Text { x: 264px; y: 687px; width: 36px; height: 26px; horizontal-alignment: center; vertical-alignment: center; text: "+"; color: ink; font-size: 21px; font-weight: 800; }
+    TouchArea { x: 258px; y: 685px; width: 48px; height: 30px; clicked => { Media.volume-up(); } }
 
     Rectangle { x: 392px; y: 686px; width: 840px; height: 40px; border-radius: 20px; background: glass-deep.with-alpha(0.58); border-width: 1px; border-color: glass-edge.with-alpha(0.5); }
     Text { x: 408px; y: 692px; width: 160px; height: 28px; text: "OLA  /  EV VISION"; color: muted; font-size: 17px; font-weight: 800; letter-spacing: 1.1px; }
