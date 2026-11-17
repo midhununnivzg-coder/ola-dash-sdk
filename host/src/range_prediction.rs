@@ -10,6 +10,8 @@ pub struct RangeEstimator {
     range_km: Option<f64>,
     odometer_km: Option<f64>,
     fine_soc_pct: Option<f64>,
+    battery_pct: Option<f64>,
+    awaiting_charge_soc: bool,
     baseline_odometer_km: Option<f64>,
     baseline_soc_pct: Option<f64>,
     baseline_range_km: Option<f64>,
@@ -24,6 +26,8 @@ impl RangeEstimator {
             range_km: None,
             odometer_km: None,
             fine_soc_pct: None,
+            battery_pct: None,
+            awaiting_charge_soc: false,
             baseline_odometer_km: None,
             baseline_soc_pct: None,
             baseline_range_km: None,
@@ -52,15 +56,28 @@ impl RangeEstimator {
         self.refresh_for_distance();
     }
 
-    pub fn set_fine_soc(&mut self, value: f64) {
+    /// Whole-number dashboard battery percentage is the sole charge/reset trigger.
+    pub fn set_battery_pct(&mut self, value: f64) {
         let next = valid_soc(value);
-        if let (Some(previous), Some(current)) = (self.fine_soc_pct, next) {
-            // Only an actual increase in battery SoC begins a new prediction cycle.
+        if let (Some(previous), Some(current)) = (self.battery_pct, next) {
             if current > previous {
-                self.start_new_charge_cycle(current);
+                self.start_new_charge_cycle();
+                self.awaiting_charge_soc = true;
             }
         }
-        self.fine_soc_pct = next;
+        self.battery_pct = next;
+    }
+
+    pub fn set_fine_soc(&mut self, value: f64) {
+        self.fine_soc_pct = valid_soc(value);
+        // Anchor to the fine SoC sample associated with the whole-percent rise.
+        if self.awaiting_charge_soc {
+            self.baseline_odometer_km = self.odometer_km;
+            self.baseline_soc_pct = self.fine_soc_pct;
+            self.baseline_range_km = self.range_km;
+            self.last_update_distance_km = 0.0;
+            self.awaiting_charge_soc = false;
+        }
         self.initialize_if_needed();
         self.refresh_for_distance();
     }
@@ -71,9 +88,9 @@ impl RangeEstimator {
     pub fn predicted_range(&self) -> Option<f64> { self.predicted_km }
     pub fn is_calibrated(&self) -> bool { self.calibrated }
 
-    fn start_new_charge_cycle(&mut self, new_soc: f64) {
+    fn start_new_charge_cycle(&mut self) {
         self.baseline_odometer_km = self.odometer_km;
-        self.baseline_soc_pct = Some(new_soc);
+        self.baseline_soc_pct = self.fine_soc_pct;
         self.baseline_range_km = self.range_km;
         self.calibrated = false;
         self.last_update_distance_km = 0.0;
