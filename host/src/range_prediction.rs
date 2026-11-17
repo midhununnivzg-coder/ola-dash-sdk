@@ -1,21 +1,22 @@
 //! Live range estimator for the EV Vision dashboard.
 //!
-//! It holds the vehicle's own Range-tab estimate until either 2 km have been
-//! travelled or 2 percentage points of SoC have been consumed. It then derives
-//! km per percentage point from the observed ride and multiplies by remaining SoC.
-//! Once calibrated, it only refreshes at each additional whole kilometre.
+//! The Range-tab estimate is the starting value. Efficiency is calibrated after
+//! 2 km or 2 percentage points of SoC consumption, whichever happens first.
+//! Once calibrated, the estimate changes only after each additional 800 metres.
+//! A rise in battery SoC starts a new cycle from the current Range-tab estimate.
+//! Trip-counter resets (for example on lock/unlock) never reset the estimate.
 
 #[derive(Debug, Clone)]
 pub struct RangeEstimator {
     range_km: Option<f64>,
     trip_km: Option<f64>,
+    total_distance_km: f64,
     fine_soc_pct: Option<f64>,
-    baseline_trip_km: Option<f64>,
+    baseline_distance_km: Option<f64>,
     baseline_soc_pct: Option<f64>,
     baseline_range_km: Option<f64>,
-    charging: bool,
     calibrated: bool,
-    last_update_km: u64,
+    last_update_distance_km: f64,
     predicted_km: Option<f64>,
 }
 
@@ -24,13 +25,13 @@ impl RangeEstimator {
         Self {
             range_km: None,
             trip_km: None,
+            total_distance_km: 0.0,
             fine_soc_pct: None,
-            baseline_trip_km: None,
+            baseline_distance_km: None,
             baseline_soc_pct: None,
             baseline_range_km: None,
-            charging: false,
             calibrated: false,
-            last_update_km: 0,
+            last_update_distance_km: 0.0,
             predicted_km: None,
         }
     }
@@ -41,33 +42,44 @@ impl RangeEstimator {
 
     pub fn set_range(&mut self, value: f64) {
         self.range_km = valid_range(value);
-        self.refresh();
+        // Range-tab telemetry may update frequently. Never overwrite an active
+        // prediction just because that source changed.
+        self.initialize_if_needed();
     }
 
     pub fn set_trip(&mut self, value: f64) {
-        let next = valid_distance(value);
-        if let (Some(previous), Some(current)) = (self.trip_km, next) {
-            // The odometer-derived trip counter drops to zero on a fresh unlock.
-            if current + 0.05 < previous {
-                self.clear_calibration();
+        if let Some(current) = valid_distance(value) {
+            if let Some(previous) = self.trip_km {
+                if current >= previous {
+                    self.total_distance_km += current - previous;
+                }
+                // A falling trip counter is a trip reset. Re-anchor the counter
+                // without changing accumulated distance or prediction.
             }
+            self.trip_km = Some(current);
         }
-        self.trip_km = next;
-        self.refresh();
+        self.initialize_if_needed();
+        self.refresh_for_distance();
     }
 
     pub fn set_fine_soc(&mut self, value: f64) {
-        self.fine_soc_pct = valid_soc(value);
-        self.refresh();
+        let next = valid_soc(value);
+        if let (Some(previous), Some(current)) = (self.fine_soc_pct, next) {
+            // A battery percentage increase is the reliable charging signal.
+            // It starts a fresh prediction cycle even if the charger-status
+            // telemetry or trip counter has not changed.
+            if current > previous + 0.01 {
+                self.start_new_charge_cycle();
+            }
+        }
+        self.fine_soc_pct = next;
+        self.initialize_if_needed();
+        self.refresh_for_distance();
     }
 
-    pub fn set_charging(&mut self, charging: bool) {
-        if charging && !self.charging {
-            self.clear_calibration();
-        }
-        self.charging = charging;
-        self.refresh();
-    }
+    // Retained for existing telemetry callers. A charger-status flag alone does
+    // not refresh the prediction; the battery percentage increase does.
+    pub fn set_charging(&mut self, _charging: bool) {}
 
     pub fn predicted_range(&self) -> Option<f64> {
         self.predicted_km
@@ -77,76 +89,66 @@ impl RangeEstimator {
         self.calibrated
     }
 
-    fn current_soc(&self) -> Option<f64> {
-        self.fine_soc_pct
-    }
-
-    fn clear_calibration(&mut self) {
-        self.baseline_trip_km = None;
-        self.baseline_soc_pct = None;
-        self.baseline_range_km = None;
+    fn start_new_charge_cycle(&mut self) {
+        self.baseline_distance_km = Some(self.total_distance_km);
+        self.baseline_soc_pct = self.fine_soc_pct;
+        self.baseline_range_km = self.range_km;
         self.calibrated = false;
-        self.last_update_km = 0;
-        self.predicted_km = self.range_km;
+        self.last_update_distance_km = 0.0;
+        // Use the vehicle's own Range-tab estimate as the new starting point.
+        if let Some(range) = self.range_km {
+            self.predicted_km = Some(range);
+        }
     }
 
-    fn refresh(&mut self) {
-        if self.charging {
-            self.predicted_km = self.range_km;
-            self.calibrated = false;
+    fn initialize_if_needed(&mut self) {
+        if self.baseline_distance_km.is_some()
+            && self.baseline_soc_pct.is_some()
+            && self.baseline_range_km.is_some()
+        {
             return;
         }
-
-        if self.baseline_trip_km.is_none()
-            || self.baseline_soc_pct.is_none()
-            || self.baseline_range_km.is_none()
-        {
-            if let (Some(trip), Some(soc), Some(range)) =
-                (self.trip_km, self.current_soc(), self.range_km)
-            {
-                self.baseline_trip_km = Some(trip);
-                self.baseline_soc_pct = Some(soc);
-                self.baseline_range_km = Some(range);
-                self.predicted_km = Some(range);
-                self.last_update_km = 0;
-            } else {
-                self.predicted_km = self.range_km;
-                return;
-            }
+        if let (Some(soc), Some(range)) = (self.fine_soc_pct, self.range_km) {
+            self.baseline_distance_km = Some(self.total_distance_km);
+            self.baseline_soc_pct = Some(soc);
+            self.baseline_range_km = Some(range);
+            self.predicted_km.get_or_insert(range);
+        } else if self.predicted_km.is_none() {
+            self.predicted_km = self.range_km;
         }
+    }
 
-        let (Some(trip), Some(soc), Some(base_trip), Some(base_soc)) = (
-            self.trip_km,
-            self.current_soc(),
-            self.baseline_trip_km,
+    fn refresh_for_distance(&mut self) {
+        let (Some(base_distance), Some(base_soc), Some(base_range), Some(soc)) = (
+            self.baseline_distance_km,
             self.baseline_soc_pct,
+            self.baseline_range_km,
+            self.fine_soc_pct,
         ) else {
-            // Hold the last valid prediction while one telemetry stream is absent.
             return;
         };
 
-        let distance = (trip - base_trip).max(0.0);
+        let distance = (self.total_distance_km - base_distance).max(0.0);
         let consumed = base_soc - soc;
 
         if !self.calibrated {
-            // Whichever threshold is reached first starts the efficiency estimate.
             if distance >= 2.0 || consumed >= 2.0 {
                 if distance > 0.05 && consumed > 0.05 {
                     self.calibrated = true;
-                    self.last_update_km = distance.floor() as u64;
+                    self.last_update_distance_km = distance;
                     self.recalculate(distance, consumed, soc);
                 } else {
-                    self.predicted_km = self.baseline_range_km;
+                    self.predicted_km = Some(base_range);
                 }
             } else {
-                self.predicted_km = self.baseline_range_km;
+                self.predicted_km = Some(base_range);
             }
             return;
         }
 
-        let completed_km = distance.floor() as u64;
-        if completed_km > self.last_update_km {
-            self.last_update_km = completed_km;
+        if distance - self.last_update_distance_km >= 0.8 {
+            self.last_update_distance_km +=
+                ((distance - self.last_update_distance_km) / 0.8).floor() * 0.8;
             if consumed > 0.05 && distance > 0.05 {
                 self.recalculate(distance, consumed, soc);
             }
@@ -186,7 +188,7 @@ mod tests {
     }
 
     #[test]
-    fn keeps_range_tab_estimate_until_a_threshold_is_reached() {
+    fn keeps_range_tab_estimate_until_calibration_threshold() {
         let mut r = seeded();
         r.set_trip(1.9);
         r.set_fine_soc(79.0);
@@ -195,7 +197,7 @@ mod tests {
     }
 
     #[test]
-    fn calibrates_at_two_kilometres_even_if_soc_drop_is_smaller_than_two_percent() {
+    fn calibrates_at_two_kilometres() {
         let mut r = seeded();
         r.set_trip(2.0);
         r.set_fine_soc(79.5);
@@ -204,7 +206,7 @@ mod tests {
     }
 
     #[test]
-    fn calibrates_early_when_two_percent_is_consumed() {
+    fn calibrates_when_two_percent_is_consumed() {
         let mut r = seeded();
         r.set_trip(0.8);
         r.set_fine_soc(78.0);
@@ -213,38 +215,66 @@ mod tests {
     }
 
     #[test]
-    fn refreshes_only_after_each_additional_whole_kilometre() {
+    fn refreshes_only_after_each_additional_800_metres() {
         let mut r = seeded();
         r.set_trip(2.0);
         r.set_fine_soc(79.0);
         let first = r.predicted_range().unwrap();
+        r.set_trip(2.79);
         r.set_fine_soc(78.5);
         assert_eq!(r.predicted_range(), Some(first));
-        r.set_trip(3.0);
-        assert!((r.predicted_range().unwrap() - 157.0).abs() < 0.001);
+        r.set_trip(2.8);
+        assert!((r.predicted_range().unwrap() - (2.8 / 1.0 * 78.5)).abs() < 0.001);
     }
 
     #[test]
-    fn trip_reset_restarts_calibration_from_the_current_range_and_soc() {
+    fn trip_counter_reset_does_not_reset_prediction_or_distance_tracking() {
         let mut r = seeded();
         r.set_trip(2.0);
         r.set_fine_soc(79.0);
-        assert!(r.is_calibrated());
+        let first = r.predicted_range();
         r.set_range(110.0);
         r.set_trip(0.0);
-        assert!(!r.is_calibrated());
-        assert_eq!(r.predicted_range(), Some(110.0));
+        assert!(r.is_calibrated());
+        assert_eq!(r.predicted_range(), first);
+        r.set_trip(0.8);
+        assert_ne!(r.predicted_range(), first);
     }
 
     #[test]
-    fn charging_displays_the_vehicle_estimate_and_restarts_calibration() {
+    fn battery_percentage_increase_restarts_from_range_tab_estimate() {
         let mut r = seeded();
         r.set_trip(2.0);
         r.set_fine_soc(79.0);
         assert!(r.is_calibrated());
         r.set_range(105.0);
-        r.set_charging(true);
+        r.set_fine_soc(80.0);
         assert!(!r.is_calibrated());
         assert_eq!(r.predicted_range(), Some(105.0));
+        r.set_trip(2.8);
+        r.set_fine_soc(79.5);
+        assert!(!r.is_calibrated());
+        assert_eq!(r.predicted_range(), Some(105.0));
+    }
+
+    #[test]
+    fn charger_status_alone_does_not_refresh_prediction() {
+        let mut r = seeded();
+        r.set_trip(2.0);
+        r.set_fine_soc(79.0);
+        let prediction = r.predicted_range();
+        r.set_charging(true);
+        assert_eq!(r.predicted_range(), prediction);
+        assert!(r.is_calibrated());
+    }
+
+    #[test]
+    fn range_tab_updates_do_not_overwrite_live_prediction() {
+        let mut r = seeded();
+        r.set_trip(2.0);
+        r.set_fine_soc(79.0);
+        let prediction = r.predicted_range();
+        r.set_range(99.0);
+        assert_eq!(r.predicted_range(), prediction);
     }
 }
