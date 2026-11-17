@@ -658,6 +658,38 @@ fn wire_plugins(ui: &ComponentInstance, app: &AndroidApp, files: &Path) -> Resul
     }).map_err(|e| format!("set-plugin: {e:?}"))
 }
 
+/// Reports a successful first frame to the Java-side startup watchdog.
+fn notify_first_frame(app: &AndroidApp) {
+    let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
+    let result = vm.attach_current_thread(|env| -> jni::errors::Result<()> {
+        let activity = ManuallyDrop::new(unsafe {
+            JObject::from_raw(&*env, app.activity_as_ptr() as jni::sys::jobject)
+        });
+        env.call_method(&*activity, jni_str!("onNativeFirstFrame"), jni_sig!("()V"), &[])?;
+        Ok(())
+    });
+    if let Err(e) = result { log::warn!("first-frame notification failed: {e}"); }
+}
+
+/// Displays native startup failures instead of leaving only the Android window background visible.
+fn notify_startup_error(app: &AndroidApp, message: &str) {
+    let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
+    let result = vm.attach_current_thread(|env| -> jni::errors::Result<()> {
+        let activity = ManuallyDrop::new(unsafe {
+            JObject::from_raw(&*env, app.activity_as_ptr() as jni::sys::jobject)
+        });
+        let message = env.new_string(message)?;
+        env.call_method(
+            &*activity,
+            jni_str!("onNativeStartupError"),
+            jni_sig!("(Ljava/lang/String;)V"),
+            &[JValue::Object(&message)],
+        )?;
+        Ok(())
+    });
+    if let Err(e) = result { log::error!("startup error notification failed: {e}"); }
+}
+
 fn run(app: &AndroidApp, start: Instant) -> Result<(), String> {
     let files = app.internal_data_path().ok_or("no internal data path")?;
     let settings = Rc::new(RefCell::new(settings::Settings::load(Some(&files.join("settings.json")), log_warn)));
@@ -681,10 +713,12 @@ fn run(app: &AndroidApp, start: Instant) -> Result<(), String> {
         .map_err(|e| format!("HostState.restart-name: {e:?}"))?;
     // First frame is measured from android_main entry (the load start), not process start.
     let mut first = Some(start);
+    let frame_app = app.clone();
     if let Err(e) = ui.window().set_rendering_notifier(move |state, _| {
         if let (slint::RenderingState::AfterRendering, Some(t)) = (state, first) {
             first = None;
             timing("first-frame", t);
+            notify_first_frame(&frame_app);
         }
     }) {
         log::warn!("first-frame timing unavailable: {e:?}");
@@ -725,10 +759,12 @@ fn android_main(app: android_activity::AndroidApp) {
     };
     if let Err(e) = slint::android::init_with_event_listener(app.clone(), listener) {
         log::error!("slint android init failed: {e}");
+        notify_startup_error(&app, &format!("Slint Android initialisation failed: {e}"));
         return;
     }
     if let Err(e) = run(&app, start) {
         log::error!("fatal: {e}");
+        notify_startup_error(&app, &format!("Ola Dash could not build or start its dashboard: {e}"));
         // files/ may be damaged: recopy the bundled assets on the next start.
         if let Some(files) = app.internal_data_path() {
             let _ = std::fs::remove_file(files.join(".assets-stamp"));
