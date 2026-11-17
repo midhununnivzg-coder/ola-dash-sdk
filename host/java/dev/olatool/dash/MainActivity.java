@@ -102,9 +102,13 @@ public final class MainActivity extends NativeActivity {
     private void applyWindowBrightness(int percent) {
         if (isFinishing() || isDestroyed()) return;
         WindowManager.LayoutParams params = getWindow().getAttributes();
-        params.screenBrightness = percent / 100.0f;
+        float target = percent / 100.0f;
+        // Reapplying identical window attributes during screen wake can trigger a SurfaceView
+        // relayout on some Android 10 vendor builds. That produces a brief blank/scale animation.
+        // Only update the window when the brightness override has actually changed.
+        if (Math.abs(params.screenBrightness - target) < 0.005f) return;
+        params.screenBrightness = target;
         getWindow().setAttributes(params);
-        getWindow().getDecorView().invalidate();
     }
 
     public void onSetBrightness(int percent) {
@@ -143,6 +147,8 @@ public final class MainActivity extends NativeActivity {
         // Bad-theme guard: strike the active theme before Slint can crash on it (cleared below).
         Log.i(TAG, "theme guard: " + BadThemeGuard.strike(getFilesDir()));
         super.onCreate(state);
+        // Do not animate Activity window transitions: the native Slint surface is full-screen.
+        getWindow().setWindowAnimations(0);
         handler.postDelayed(startupWatchdog, 15_000L);
         handler.postDelayed(BadThemeGuard::cleanExit, 10_000L); // survived 10 s
         // Unverified until M-sleep (session A): does the locked panel still sleep with this flag?
