@@ -206,7 +206,10 @@ component TelltaleStrip inherits Rectangle {
             : (root.labels ? OverlayTokens.slot-pitch-labels : OverlayTokens.slot-pitch);
         property <bool> lit: root.is-on(t);
         property <bool> hidden-telltale: t == Telltale.fault || t == Telltale.locked || t == Telltale.side-stand;
-        property <length> middle-offset: (i - 2) * pitch;
+        // Position the four remaining status telltales by kind, independent of a theme's order.
+        property <int> middle-index: t == Telltale.ready ? 0 : t == Telltale.high-beam ? 1
+            : t == Telltale.headlight ? 2 : 3;
+        property <length> middle-offset: self.middle-index * pitch;
         visible: !self.hidden-telltale;
         x: root.vertical ? (root.width - self.width) / 2
             : t == Telltale.left-indicator ? OverlayTokens.slot-pad
