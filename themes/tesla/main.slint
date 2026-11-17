@@ -95,8 +95,13 @@ export component Dash inherits Window {
     // Centre vehicle / navigation canvas. Restrained line-art, not a fake map.
     Rectangle {
         x: 430px; y: 190px; width: 470px; height: 350px;
-        border-radius: 18px; background: #0b0b0b;
-        border-width: 1px; border-color: #242424;
+        border-radius: 22px; background: #0b0b0b;
+        border-width: 1px; border-color: #303030;
+    }
+    // Soft red ambient horizon line, matching the EV Vision reference.
+    Rectangle {
+        x: 454px; y: 438px; width: 422px; height: 2px;
+        border-radius: 1px; background: #702024;
     }
     Text {
         x: 462px; y: 214px; width: 406px; height: 24px;
@@ -123,6 +128,20 @@ export component Dash inherits Window {
     if !Navigation.active : Rectangle {
         x: 740px; y: 320px; width: 44px; height: 8px;
         border-radius: 4px; background: #d8d8d8;
+    }
+    // Rear carrier and top box: make the scooter silhouette unmistakable.
+    if !Navigation.active : Rectangle {
+        x: 704px; y: 286px; width: 62px; height: 12px;
+        border-radius: 6px; background: #d8d8d8;
+    }
+    if !Navigation.active : Rectangle {
+        x: 710px; y: 264px; width: 48px; height: 27px;
+        border-radius: 7px; background: #202020;
+        border-width: 2px; border-color: #b8b8b8;
+    }
+    if !Navigation.active : Rectangle {
+        x: 716px; y: 260px; width: 36px; height: 6px;
+        border-radius: 3px; background: #d8d8d8;
     }
     if !Navigation.active : Rectangle {
         x: 558px; y: 364px; width: 58px; height: 58px;
@@ -233,11 +252,25 @@ export component Dash inherits Window {
         border-width: 1px; border-color: Vehicle.trunk-open ? #e82127 : #303030;
         opacity: trunk-ready || Vehicle.trunk-open ? 1 : 0.4;
     }
+    // Scooter top-box icon (lid, storage body and latch), not a car boot symbol.
+    Rectangle {
+        x: 971px; y: 659px; width: 52px; height: 7px;
+        border-radius: 3px; background: #d8d8d8;
+    }
+    Rectangle {
+        x: 976px; y: 665px; width: 42px; height: 25px;
+        border-radius: 5px; background: #242424;
+        border-width: 2px; border-color: #d8d8d8;
+    }
+    Rectangle {
+        x: 993px; y: 674px; width: 8px; height: 5px;
+        border-radius: 2px; background: #e82127;
+    }
     Text {
-        x: 926px; y: 650px; width: 142px; height: 78px;
+        x: 936px; y: 696px; width: 122px; height: 22px;
         horizontal-alignment: center; vertical-alignment: center;
-        text: Vehicle.trunk-open ? "Trunk open" : "Open trunk";
-        color: #f5f5f5; font-size: 17px; font-weight: 600;
+        text: Vehicle.trunk-open ? "Trunk open" : "Trunk";
+        color: #f5f5f5; font-size: 16px; font-weight: 600;
     }
     TouchArea { x: 926px; y: 650px; width: 142px; height: 78px; enabled: trunk-ready; clicked => { Actions.open-trunk(); } }
 
