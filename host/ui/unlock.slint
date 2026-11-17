@@ -171,7 +171,7 @@ export component UnlockScreen inherits Rectangle {
     // ---- left column: clock, date, battery (the strip carries lock and charging) ----
     clock := HostText {
         visible: !root.segment || root.clock-hhmm < 0;
-        x: 104px; y: 250px; width: 380px; height: 144px;
+        x: 104px; y: 274px; width: 380px; height: 144px;
         text: root.clock-label;
         color: LockConfig.style.foreground;
         font-size: 112px;
@@ -181,7 +181,7 @@ export component UnlockScreen inherits Rectangle {
     }
     segment-clock := Rectangle {
         visible: root.segment && root.clock-hhmm >= 0;
-        x: 72px + (444px - (root.short-hour ? 204px : 268px)) / 2; y: 266px; width: root.short-hour ? 204px : 268px; height: 112px;
+        x: 72px + (444px - (root.short-hour ? 204px : 268px)) / 2; y: 290px; width: root.short-hour ? 204px : 268px; height: 112px;
         background: transparent;
         LockSegDigit {
             visible: !root.short-hour;
@@ -218,7 +218,7 @@ export component UnlockScreen inherits Rectangle {
         font-weight: 700;
     }
     HostText {
-        x: 72px; y: 410px; width: 444px; height: 32px;
+        x: 72px; y: 434px; width: 444px; height: 32px;
         text: root.date-text;
         color: LockConfig.style.muted;
         font-size: 22px;
@@ -226,7 +226,7 @@ export component UnlockScreen inherits Rectangle {
         vertical-alignment: center;
     }
     if !root.segment : HostText {
-        x: 72px; y: 458px; width: 444px; height: 56px;
+        x: 72px; y: 482px; width: 444px; height: 56px;
         text: root.battery-pct < 0 ? "--" : root.battery-pct + "%";
         color: LockConfig.style.foreground;
         font-size: 48px;
@@ -235,7 +235,7 @@ export component UnlockScreen inherits Rectangle {
         vertical-alignment: center;
     }
     if root.segment : Rectangle {
-        x: 72px; y: 466px; width: 444px; height: 40px;
+        x: 72px; y: 490px; width: 444px; height: 40px;
         background: transparent;
         LockSegDigit {
             x: 174px; width: 22px; height: 40px; ink: LockConfig.style.foreground;
@@ -261,7 +261,7 @@ export component UnlockScreen inherits Rectangle {
 
     // ---- right column: caption, hint or status, passcode cells, keypad ----
     HostText {
-        x: root.kx + 36px; y: 60px; width: 524px; height: 42px;
+        x: root.kx + 36px; y: 84px; width: 524px; height: 42px;
         text: root.phase == 0 ? (root.error == 2 ? "Connection unavailable" : "Connecting")
             : root.phase == 3 ? "Unlocking"
             : root.phase == 2 ? "Checking passcode"
@@ -275,7 +275,7 @@ export component UnlockScreen inherits Rectangle {
     }
 
     HostText {
-        x: root.kx + 36px; y: 106px; width: 524px; height: 48px;
+        x: root.kx + 36px; y: 130px; width: 524px; height: 48px;
         text: root.line;
         color: root.failed ? LockConfig.error : LockConfig.style.muted;
         font-size: 18px;
@@ -285,7 +285,7 @@ export component UnlockScreen inherits Rectangle {
 
     // Passcode cells: a dot per digit entered. Square when the keys are.
     if root.entering : HorizontalLayout {
-        x: root.kx + 36px; y: 166px; width: 524px; height: 56px;
+        x: root.kx + 36px; y: 190px; width: 524px; height: 56px;
         spacing: 12px;
         for i in 6 : Rectangle {
             border-radius: root.square-cells ? 4px : 18px;
@@ -304,7 +304,7 @@ export component UnlockScreen inherits Rectangle {
 
     // Keypad: 3 x 4 keys in a fixed 596 x 432 block. Grid keys share 1 px hairlines.
     if root.entering : Rectangle {
-        x: root.kx + 36px; y: 238px; width: 524px; height: 410px;
+        x: root.kx + 36px; y: 262px; width: 524px; height: 410px;
         background: root.grid ? LockConfig.style.key-border : transparent;
         VerticalLayout {
             spacing: root.gap;
