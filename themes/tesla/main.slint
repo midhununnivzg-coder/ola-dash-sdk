@@ -13,21 +13,21 @@ export component Dash inherits Window {
     // Display.night is driven by the host's Off / On / Auto setting.
     // Auto follows the configured local schedule (default 19:00–06:30).
     property <bool> night: Display.night;
-    property <color> page: night ? page : #f2f6f4;
-    property <color> panel: night ? panel : ink;
-    property <color> panel-raised: night ? panel-raised : #e9efed;
-    property <color> border: night ? border : #d6e0dc;
-    property <color> border-strong: night ? border-strong : #c5d3cd;
-    property <color> ink: night ? ink : #17231f;
-    property <color> muted: night ? muted : #62736c;
-    property <color> soft: night ? soft : #71827b;
+    property <color> page: night ? #050505 : #f2f6f4;
+    property <color> panel: night ? #0b0b0b : #ffffff;
+    property <color> panel-raised: night ? #101010 : #e9efed;
+    property <color> border: night ? #292929 : #d6e0dc;
+    property <color> border-strong: night ? #303030 : #c5d3cd;
+    property <color> ink: night ? #f5f5f5 : #17231f;
+    property <color> muted: night ? #777777 : #62736c;
+    property <color> soft: night ? #888888 : #71827b;
     property <color> scooter-mint: #8fd8c7;
-    property <color> scooter-dark: scooter-dark;
-    property <color> wheel-fill: night ? page : #dce5e1;
-    property <color> wheel-outline: night ? muted : #50645b;
-    property <color> scooter-trim: night ? scooter-trim : #45554e;
-    property <color> danger: danger;
-    property <color> danger-soft: night ? danger-soft : #f2c9c7;
+    property <color> scooter-dark: #202020;
+    property <color> wheel-fill: night ? #050505 : #dce5e1;
+    property <color> wheel-outline: night ? #777777 : #50645b;
+    property <color> scooter-trim: night ? #d8d8d8 : #45554e;
+    property <color> danger: #e82127;
+    property <color> danger-soft: night ? #702024 : #f2c9c7;
 
     property <bool> charge-view: Vehicle.charging || Vehicle.state == VehicleState.charging;
     property <bool> parked: !charge-view && (Vehicle.state == VehicleState.park || Vehicle.mode == DriveMode.park);
