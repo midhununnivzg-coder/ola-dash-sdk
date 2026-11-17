@@ -406,7 +406,7 @@ export component SettingsScreen inherits Rectangle {
         border-color: LockConfig.style.muted;
         background: transparent;
         Rectangle {
-            x: 2px; y: 2px; width: max(0px, 18px * clamp(HostState.battery-pct / 100, 0, 1)); height: 8px;
+            x: 2px; y: 2px; width: 18px * clamp(HostState.battery-pct / 100.0, 0.0, 1.0); height: 8px;
             border-radius: 1px;
             background: HostState.battery-pct < 15 ? #ff625f : LockConfig.style.accent;
         }
