@@ -104,6 +104,8 @@ public final class PluginHost {
         }
         if (action.equals("plugins.refresh")) {
             refresh();
+        } else if (action.equals("media.volume-up") || action.equals("media.volume-down")) {
+            StockMediaService.adjustVolume(app, action);
         } else if (action.startsWith("media.")) {
             MediaInfo m = displayMedia();
             if (m != null && m.owner != null) {
