@@ -175,11 +175,11 @@ export component Dash inherits Window {
     Text { x: 944px; y: 548px; width: 250px; height: 20px; text: Battery.temp-max-c < 0 ? "BATTERY TEMP   --" : "BATTERY TEMP   " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 0.8px; }
 
     // Drive mode strip.
-    Rectangle { x: 412px; y: 610px; width: 820px; height: 58px; border-radius: 20px; background: glass-deep.with-alpha(0.78); border-width: 1px; border-color: card-edge; }
-    Text { x: 416px; y: 628px; width: 130px; height: 22px; text: "DRIVE PROFILE"; color: muted; font-size: 14px; font-weight: 700; letter-spacing: 1.4px; }
+    Rectangle { x: 392px; y: 610px; width: 840px; height: 58px; border-radius: 20px; background: glass-deep.with-alpha(0.78); border-width: 1px; border-color: card-edge; }
+    Text { x: 416px; y: 610px; width: 150px; height: 58px; text: "DRIVE PROFILE"; color: muted; font-size: 14px; font-weight: 700; letter-spacing: 1.4px; vertical-alignment: center; }
     Rectangle { x: 584px; y: 623px; width: 1px; height: 30px; background: glass-edge.with-alpha(0.6); }
     Text {
-        x: 610px; y: 624px; width: 580px; height: 28px;
+        x: 610px; y: 610px; width: 580px; height: 58px; vertical-alignment: center;
         text: Vehicle.mode == DriveMode.eco ? "ECO" : Vehicle.mode == DriveMode.normal ? "NORMAL"
             : Vehicle.mode == DriveMode.sport ? "SPORT" : Vehicle.mode == DriveMode.hyper ? "HYPER"
             : Vehicle.mode == DriveMode.custom ? "CUSTOM" : reversing ? "REVERSE" : parked ? "PARK" : "--";
@@ -213,9 +213,9 @@ export component Dash inherits Window {
     Text { x: 300px; y: 648px; width: 48px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: "+"; color: ink; font-size: 24px; font-weight: 800; }
     TouchArea { x: 300px; y: 646px; width: 48px; height: 64px; clicked => { Media.volume-up(); } }
     Rectangle { x: 392px; y: 686px; width: 840px; height: 40px; border-radius: 20px; background: glass-deep.with-alpha(0.58); border-width: 1px; border-color: card-edge; }
-    Text { x: 408px; y: 692px; width: 160px; height: 28px; text: "MOD BY M@DDY"; color: muted; font-size: 17px; font-weight: 800; letter-spacing: 1.1px; }
-    Text { x: 588px; y: 692px; width: 190px; height: 28px; text: Vehicle.odometer-km < 0 ? "ODO  -- KM" : "ODO  " + round(Vehicle.odometer-km) + " KM"; color: muted; font-size: 17px; font-weight: 800; }
-    Text { x: 786px; y: 692px; width: 190px; height: 28px; text: Battery.temp-max-c < 0 ? "BATTERY TEMP  --°C" : "BATTERY TEMP  " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 17px; font-weight: 800; }
+    Text { x: 408px; y: 686px; width: 160px; height: 40px; text: "MOD BY M@DDY"; color: muted; font-size: 17px; font-weight: 800; letter-spacing: 1.1px; vertical-alignment: center; }
+    Text { x: 588px; y: 686px; width: 190px; height: 40px; text: Vehicle.odometer-km < 0 ? "ODO  -- KM" : "ODO  " + round(Vehicle.odometer-km) + " KM"; color: muted; font-size: 17px; font-weight: 800; vertical-alignment: center; }
+    Text { x: 786px; y: 686px; width: 190px; height: 40px; text: Battery.temp-max-c < 0 ? "BATTERY TEMP  --°C" : "BATTERY TEMP  " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 17px; font-weight: 800; vertical-alignment: center; }
     Rectangle { x: 988px; y: 686px; width: 112px; height: 40px; border-radius: 17px; background: glass.with-alpha(0.88); border-width: 1px; border-color: card-edge; }
     Text { x: 988px; y: 686px; width: 112px; height: 40px; horizontal-alignment: center; vertical-alignment: center; text: "AA  ↗"; color: ink; font-size: 16px; font-weight: 700; }
     TouchArea { x: 988px; y: 686px; width: 112px; height: 40px; clicked => { Actions.open-android-auto(); } }
