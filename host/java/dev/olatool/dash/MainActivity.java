@@ -86,6 +86,17 @@ public final class MainActivity extends NativeActivity {
         VehicleBridge.openTrunk();
     }
 
+    /** Reads the current window override or Android's saved screen brightness (0-100). */
+    public int onGetScreenBrightness() {
+        float windowBrightness = getWindow().getAttributes().screenBrightness;
+        if (windowBrightness >= 0.0f) {
+            return Math.max(10, Math.min(100, Math.round(windowBrightness * 100.0f)));
+        }
+        int systemBrightness = Settings.System.getInt(
+                getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 255);
+        return Math.max(10, Math.min(100, Math.round(systemBrightness * 100.0f / 255.0f)));
+    }
+
     /** Applies a per-window brightness override; Android restores system brightness outside this app. */
     public void onSetBrightness(int percent) {
         final int bounded = Math.max(10, Math.min(100, percent));

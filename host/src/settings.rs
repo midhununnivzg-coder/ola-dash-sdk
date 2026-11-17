@@ -100,10 +100,10 @@ impl Settings {
         self.values.get("clock24").and_then(Json::as_bool).unwrap_or(true)
     }
 
-    pub fn brightness(&self) -> u32 {
+    pub fn brightness(&self) -> Option<u32> {
         self.values.get("brightness").and_then(Json::as_u64)
             .filter(|n| (10..=100).contains(n))
-            .map(|n| n as u32).unwrap_or(100)
+            .map(|n| n as u32)
     }
 
     fn dashboard_text(&self, key: &str, default: &str) -> String {
@@ -189,12 +189,17 @@ pub fn refresh_night(ui: &ComponentInstance) -> Result<(), String> {
     apply_night(ui, night_now(mode, start, end, hhmm, trusted))
 }
 
-fn apply_preferences(ui: &ComponentInstance, settings: &SharedSettings, refresh_clock: fn(&ComponentInstance)) -> Result<(), String> {
+fn apply_preferences(
+    ui: &ComponentInstance,
+    settings: &SharedSettings,
+    refresh_clock: fn(&ComponentInstance),
+    system_brightness: u32,
+) -> Result<(), String> {
     // Release the shared borrow before updating any UI property or callback.
     let (mode, start, end, clock24, brightness, dashboard_labels) = {
         let s = settings.borrow();
         (
-            s.night(), s.night_start(), s.night_end(), s.clock24(), s.brightness(),
+            s.night(), s.night_start(), s.night_end(), s.clock24(), s.brightness().unwrap_or(system_brightness),
             [
                 ("dashboard-model-title", s.dashboard_text("dashboard-model-title", "SUPER SCOOTER S1 PRO")),
                 ("dashboard-color", s.dashboard_text("dashboard-color", "NEO MINT BLUE")),
@@ -231,21 +236,26 @@ pub fn bind(
     settings: SharedSettings,
     log: fn(&str),
     refresh_clock: fn(&ComponentInstance),
+    system_brightness: u32,
     set_brightness: impl Fn(u32) + 'static,
 ) -> Result<(), String> {
-    apply_preferences(ui, &settings, refresh_clock)?;
+    apply_preferences(ui, &settings, refresh_clock, system_brightness)?;
     let set_brightness: Rc<dyn Fn(u32)> = Rc::new(set_brightness);
-    set_brightness(settings.borrow().brightness());
+    if let Some(percent) = settings.borrow().brightness() {
+        set_brightness(percent);
+    }
     let weak = ui.as_weak();
     ui.set_callback("set-setting", move |args| {
         if let [Value::String(key), Value::String(value)] = args {
             let saved = settings.borrow_mut().set(key.as_str(), value.as_str());
             let result = saved.and_then(|_| {
                 if key.as_str() == "brightness" {
-                    set_brightness(settings.borrow().brightness());
+                    set_brightness(settings.borrow().brightness().unwrap_or(system_brightness));
                 }
                 if key != "setup" {
-                    if let Some(ui) = weak.upgrade() { apply_preferences(&ui, &settings, refresh_clock)?; }
+                    if let Some(ui) = weak.upgrade() {
+                        apply_preferences(&ui, &settings, refresh_clock, system_brightness)?;
+                    }
                 }
                 Ok(())
             });
@@ -291,7 +301,7 @@ mod tests {
         assert_eq!(settings.night_start(), NIGHT_START);
         assert_eq!(settings.night_end(), NIGHT_END);
         assert!(settings.clock24());
-        assert_eq!(settings.brightness(), 100);
+        assert_eq!(settings.brightness(), None);
         assert!(!dir.file().exists());
     }
 
@@ -300,10 +310,10 @@ mod tests {
         let dir = Dir::new();
         let mut settings = Settings::load(Some(&dir.file()), |_| {});
         settings.set("brightness", "42").unwrap();
-        assert_eq!(settings.brightness(), 42);
+        assert_eq!(settings.brightness(), Some(42));
         assert!(settings.set("brightness", "0").is_err());
         assert!(settings.set("brightness", "101").is_err());
-        assert_eq!(Settings::load(Some(&dir.file()), |_| {}).brightness(), 42);
+        assert_eq!(Settings::load(Some(&dir.file()), |_| {}).brightness(), Some(42));
     }
 
     #[test]

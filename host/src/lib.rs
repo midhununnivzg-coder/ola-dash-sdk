@@ -213,6 +213,29 @@ fn request_trunk(app: &AndroidApp) {
     }
 }
 
+/// Reads the current effective window/system brightness for the slider's initial position.
+fn get_screen_brightness(app: &AndroidApp) -> u32 {
+    let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
+    let result = vm.attach_current_thread(|env| -> jni::errors::Result<i32> {
+        let activity = ManuallyDrop::new(unsafe {
+            JObject::from_raw(&*env, app.activity_as_ptr() as jni::sys::jobject)
+        });
+        Ok(env.call_method(
+            &*activity,
+            jni_str!("onGetScreenBrightness"),
+            jni_sig!("()I"),
+            &[],
+        )?.i()?)
+    });
+    match result {
+        Ok(percent) => percent.clamp(10, 100) as u32,
+        Err(e) => {
+            log::warn!("screen brightness read unavailable: {e}");
+            100
+        }
+    }
+}
+
 /// Applies the settings slider to this activity's window (not the global Android setting).
 fn set_screen_brightness(app: &AndroidApp, percent: u32) {
     let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
@@ -720,8 +743,9 @@ fn run(app: &AndroidApp, start: Instant) -> Result<(), String> {
         .map_err(|e| format!("active-theme: {e:?}"))?;
     ui.set_property("first-run", Value::Bool(!settings.borrow().setup_done()))
         .map_err(|e| format!("first-run: {e:?}"))?;
+    let system_brightness = get_screen_brightness(app);
     let brightness_app = app.clone();
-    settings::bind(&ui, settings, log_warn, refresh_clock,
+    settings::bind(&ui, settings, log_warn, refresh_clock, system_brightness,
         move |percent| set_screen_brightness(&brightness_app, percent))?;
     ui.set_global_property("HostState", "version-text", Value::String(env!("CARGO_PKG_VERSION").into()))
         .map_err(|e| format!("HostState.version-text: {e:?}"))?;
