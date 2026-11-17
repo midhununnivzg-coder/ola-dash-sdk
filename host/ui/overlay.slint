@@ -298,10 +298,21 @@ export component HostOverlay inherits Rectangle {
     callback unlock-key(int);
     callback open-hub();
     property <bool> hub-visible: HostState.parked && HostState.alert-code == 0
-        && HostState.auth-phase >= 4 && !HostState.test-mode && !HostState.data-stale;
-    // Phases 0-3 (connecting, locked, verifying, unlocking) cover the dash. From PARK on
-    // (phase 4) the dash shows; DRIVE and charging are never covered.
-    property <bool> unlock-visible: HostState.auth-phase >= 0 && HostState.auth-phase < 4 && !HostState.test-mode;
+        && !root.unlock-visible && !HostState.test-mode && !HostState.data-stale;
+    // Keep the opaque lock screen over the dash until PARK/DRIVE/charge is stable.
+    // A transient vehicle-state callback must never expose the dashboard for one frame.
+    property <bool> unlock-released: false;
+    property <bool> unlock-visible: !HostState.test-mode
+        && (HostState.auth-phase < 4 || !root.unlock-released);
+    Timer {
+        interval: 300ms;
+        running: root.phase >= 4 && !root.unlock-released && !HostState.test-mode;
+        triggered => {
+            if root.phase >= 4 && !HostState.test-mode {
+                root.unlock-released = true;
+            }
+        }
+    }
     property <string> alert-title: HostState.alert-code == 1 ? "FALL OR ACCIDENT DETECTED"
         : HostState.alert-code == 2 ? "TOW / THEFT ALERT"
         : HostState.alert-code == 3 ? "SIDE STAND DOWN"
@@ -340,7 +351,10 @@ export component HostOverlay inherits Rectangle {
     // keep the switching card instead of flashing the lock screen, unless the retry key is needed.
     property <bool> restarting: HostState.restart-name != "";
     property <int> phase: HostState.auth-phase;
-    changed phase => { if root.phase != 0 { root.restarting = false; } }
+    changed phase => {
+        if root.phase != 0 { root.restarting = false; }
+        if root.phase < 4 { root.unlock-released = false; }
+    }
     property <bool> hold: root.restarting && root.phase == 0 && HostState.auth-error != 2;
     // 15 s cap so a silent BCM shows "Waiting for vehicle status"; tune after M-replay.
     Timer { interval: 15s; running: root.hold; triggered => { root.restarting = false; } }
