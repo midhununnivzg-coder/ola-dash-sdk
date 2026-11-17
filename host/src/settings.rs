@@ -77,7 +77,7 @@ impl Settings {
         match self.values.get("night").and_then(Json::as_str) {
             Some("on") => NightMode::On,
             Some("auto") => NightMode::Auto,
-            _ => NightMode::Off,
+            _ => NightMode::Auto,
         }
     }
 
@@ -242,7 +242,7 @@ mod tests {
     fn missing_file_uses_defaults_without_writing() {
         let dir = Dir::new();
         let settings = Settings::load(Some(&dir.file()), |_| panic!("missing file must be quiet"));
-        assert_eq!(settings.night(), NightMode::Off);
+        assert_eq!(settings.night(), NightMode::Auto);
         assert_eq!(settings.night_start(), NIGHT_START);
         assert_eq!(settings.night_end(), NIGHT_END);
         assert!(settings.clock24());
@@ -255,7 +255,7 @@ mod tests {
         for bytes in ["{broken", "[]", "null"] {
             fs::write(dir.file(), bytes).unwrap();
             let settings = Settings::load(Some(&dir.file()), |_| {});
-            assert_eq!(settings.night(), NightMode::Off);
+            assert_eq!(settings.night(), NightMode::Auto);
             assert!(settings.clock24());
             assert!(!dir.file().exists());
             assert_eq!(fs::read_to_string(sibling(&dir.file(), ".bad")).unwrap(), bytes);
@@ -331,7 +331,7 @@ mod tests {
         }
         for bad in [serde_json::json!("AUTO"), Json::Null, Json::Bool(true), Json::from(2)] {
             settings.values.insert("night".into(), bad);
-            assert_eq!(settings.night(), NightMode::Off);
+            assert_eq!(settings.night(), NightMode::Auto);
         }
     }
 
