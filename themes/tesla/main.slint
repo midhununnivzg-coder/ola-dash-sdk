@@ -190,7 +190,12 @@ export component Dash inherits Window {
     // Bottom dock — compact floating glass controls.
     Rectangle { x: 48px; y: 614px; width: 320px; height: 112px; border-radius: 22px; background: glass.with-alpha(0.78); border-width: 1px; border-color: glass-highlight.with-alpha(0.55); }
     Rectangle { x: 62px; y: 630px; width: 48px; height: 48px; border-radius: 14px; background: @linear-gradient(135deg, mint-glow.with-alpha(0.65) 0%, glass-deep 100%); }
-    Text { x: 62px; y: 630px; width: 48px; height: 48px; horizontal-alignment: center; vertical-alignment: center; text: "♫"; color: ink; font-size: 27px; font-weight: 700; }
+    // Draw the music-note mark with primitives so it never depends on a missing font glyph.
+    Rectangle { x: 80px; y: 638px; width: 3px; height: 19px; border-radius: 1px; background: ink; }
+    Rectangle { x: 94px; y: 634px; width: 3px; height: 19px; border-radius: 1px; background: ink; }
+    Rectangle { x: 81px; y: 634px; width: 16px; height: 3px; border-radius: 1px; background: ink; }
+    Rectangle { x: 72px; y: 652px; width: 12px; height: 9px; border-radius: 5px; background: ink; }
+    Rectangle { x: 86px; y: 648px; width: 12px; height: 9px; border-radius: 5px; background: ink; }
     Text { x: 124px; y: 628px; width: 204px; height: 25px; text: Media.title == "" ? "Nothing playing" : Media.title; color: ink; font-size: 18px; font-weight: 700; overflow: elide; }
     Text { x: 124px; y: 652px; width: 204px; height: 20px; text: Media.artist == "" ? "Media player" : Media.artist; color: muted; font-size: 14px; font-weight: 700; overflow: elide; }
     // Live playback position, refreshed twice per second from Android's active media session.
