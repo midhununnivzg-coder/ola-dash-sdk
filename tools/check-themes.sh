@@ -173,12 +173,13 @@ else
     status=1
 fi
 # Theme rows now have height 96 and pitch 112 (was 80 / 96). Minimal is third
-# after Default and Data Fields. (448,440) stays in left padding, outside the thumbnail.
+# after Default and Data Fields. Active theme uses dedicated teal selection
+# colour (#42b8a5). (448,440) stays in left padding, outside the thumbnail.
 got=$("$SIM" "$ROOT/themes/minimal" --contract "$ROOT/contract" --state park --screen settings --pane theme --at 13 --screenshot "$png" --pixel 448,440 | tail -n 1) || got=error
-if [ "$got" = "#ffc94a" ]; then
+if [ "$got" = "#42b8a5" ]; then
     echo "ok: active theme row selected (pixel 448,440 is $got)"
 else
-    echo "error: active theme row not selected (pixel 448,440 is $got, want #ffc94a)" >&2
+    echo "error: active theme row not selected (pixel 448,440 is $got, want #42b8a5)" >&2
     status=1
 fi
 # Generate the fixture preview with the real capture path, only in a temporary copy.
