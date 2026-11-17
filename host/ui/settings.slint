@@ -40,7 +40,6 @@ component DashboardTextField inherits Rectangle {
     Timer {
         interval: 700ms;
         running: root.save-pending;
-        repeated: false;
         triggered => {
             root.save-pending = false;
             root.commit(root.key, root.draft);

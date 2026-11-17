@@ -333,7 +333,6 @@ export component HostOverlay inherits Rectangle {
     Timer {
         interval: 3s;
         running: root.side-stand-hold;
-        repeated: false;
         triggered => { root.side-stand-hold = false; }
     }
     property <int> shown-alert-code: HostState.alert-code != 0
