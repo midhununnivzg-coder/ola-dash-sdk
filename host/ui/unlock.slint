@@ -27,7 +27,7 @@ export global LockConfig {
 }
 
 // One keypad key. `digit` 0-9 draws the digit in segment style when the theme asks for it.
-// `strong` fills the key with the accent (Delete); `quiet` has no fill (Clear).
+// `strong` fills the key with the accent (DELETE); `quiet` has no fill (CLEAR).
 component Key inherits Rectangle {
     in property <string> label;
     in property <int> digit: -1;
@@ -69,11 +69,6 @@ component Key inherits Rectangle {
         horizontal-alignment: center;
         vertical-alignment: center;
     }
-    Rectangle {
-        x: 7px; y: 5px; width: parent.width - 14px; height: 2px;
-        border-radius: 1px;
-        background: LockConfig.style.foreground.with-alpha(0.12);
-    }
     touch := TouchArea {
         enabled: root.enabled;
         clicked => { root.pressed(); }
@@ -83,7 +78,7 @@ component Key inherits Rectangle {
 export component UnlockScreen inherits Rectangle {
     in property <int> phase;
     in property <int> pin-length;
-    in property <int> attempts: -1;
+    in property <int> ATTEMPTS: -1;
     in property <int> error;
     in property <int> cooldown;
     in property <bool> available;
@@ -113,18 +108,18 @@ export component UnlockScreen inherits Rectangle {
     // column is the 444 px before it. HostOverlay draws the alert footer in the left column.
     property <length> kx: root.width - 104px - 596px;
     property <length> gap: root.grid ? 1px : 16px;
-    property <string> left: root.attempts + (root.attempts == 1 ? " attempt" : " attempts") + " remaining";
-    // The line under the caption: empty in the normal state until attempts are known.
-    property <string> line: root.phase == 0 ? (root.error == 2 ? "Cannot reach the passcode service, retry the connection" : "Waiting for vehicle status")
-        : root.phase == 3 ? "Waiting for the scooter to confirm unlock"
-        : root.phase == 2 ? (root.error == 2 ? "Verification is taking longer than expected, please wait" : "Please wait")
-        : root.test-mode ? "Exit test mode before unlocking"
-        : root.attempts == 0 ? ""
-        : root.error == 1 ? "Incorrect passcode" + (root.attempts > 0 ? ", " + root.left : "")
-        : root.error == 2 ? "Passcode service unavailable, retry the connection"
-        : root.error == 3 ? "Unlock was not confirmed, check the scooter and retry"
-        : root.attempts > 0 ? root.left : "";
-    property <bool> failed: root.phase == 1 && root.error != 0 && root.attempts != 0 && !root.test-mode;
+    property <string> left: root.ATTEMPTS + (root.ATTEMPTS == 1 ? " ATTEMPT" : " ATTEMPTS") + " REMAINING";
+    // The line under the caption: empty in the normal state until ATTEMPTS are known.
+    property <string> line: root.phase == 0 ? (root.error == 2 ? "CANNOT REACH THE PASSCODE SERVICE, RETRY THE CONNECTION" : "WAITING FOR VEHICLE STATUS")
+        : root.phase == 3 ? "WAITING FOR THE SCOOTER TO CONFIRM UNLOCK"
+        : root.phase == 2 ? (root.error == 2 ? "VERIFICATION IS TAKING LONGER THAN EXPECTED, PLEASE WAIT" : "PLEASE WAIT")
+        : root.test-mode ? "EXIT TEST MODE BEFORE UNLOCKING"
+        : root.ATTEMPTS == 0 ? ""
+        : root.error == 1 ? "INCORRECT PASSCODE" + (root.ATTEMPTS > 0 ? ", " + root.left : "")
+        : root.error == 2 ? "PASSCODE SERVICE UNAVAILABLE, RETRY THE CONNECTION"
+        : root.error == 3 ? "UNLOCK WAS NOT CONFIRMED, CHECK THE SCOOTER AND RETRY"
+        : root.ATTEMPTS > 0 ? root.left : "";
+    property <bool> failed: root.phase == 1 && root.error != 0 && root.ATTEMPTS != 0 && !root.test-mode;
 
     background: LockConfig.style.background;
 
@@ -154,7 +149,7 @@ export component UnlockScreen inherits Rectangle {
     }
     HostText {
         x: 104px; y: 62px; width: 360px; height: 22px;
-        text: "Ola electric / ev vision";
+        text: "OLA ELECTRIC / EV VISION";
         color: LockConfig.style.muted;
         font-size: 14px; font-weight: 800; letter-spacing: 2px;
     }
@@ -262,11 +257,11 @@ export component UnlockScreen inherits Rectangle {
     // ---- right column: caption, hint or status, passcode cells, keypad ----
     HostText {
         x: root.kx + 36px; y: 110px; width: 524px; height: 42px;
-        text: root.phase == 0 ? (root.error == 2 ? "Connection unavailable" : "Connecting")
-            : root.phase == 3 ? "Unlocking"
-            : root.phase == 2 ? "Checking passcode"
-            : root.attempts == 0 ? (root.cooldown > 0 ? "Try again in " + root.cooldown + " s" : "Try again shortly")
-            : "Enter your scooter passcode";
+        text: root.phase == 0 ? (root.error == 2 ? "CONNECTION UNAVAILABLE" : "CONNECTING")
+            : root.phase == 3 ? "UNLOCKING"
+            : root.phase == 2 ? "CHECKING PASSCODE"
+            : root.ATTEMPTS == 0 ? (root.cooldown > 0 ? "TRY AGAIN IN " + root.cooldown + " s" : "TRY AGAIN SHORTLY")
+            : "ENTER YOUR SCOOTER PASSCODE";
         color: LockConfig.style.foreground;
         font-size: 27px;
         font-weight: 800;
@@ -319,16 +314,16 @@ export component UnlockScreen inherits Rectangle {
             }
             HorizontalLayout {
                 spacing: root.gap;
-                Key { label: "Clear"; quiet: true; enabled: root.available; pressed => { root.key(11); } }
+                Key { label: "CLEAR"; quiet: true; enabled: root.available; pressed => { root.key(11); } }
                 Key { label: "0"; digit: 0; enabled: root.available; pressed => { root.key(0); } }
-                Key { label: "Delete"; strong: true; enabled: root.available; pressed => { root.key(10); } }
+                Key { label: "DELETE"; strong: true; enabled: root.available; pressed => { root.key(10); } }
             }
         }
     }
 
     if (root.phase == 0 || root.phase == 1) && root.error == 2 : Key {
         x: 104px; y: 360px; width: 300px; height: 96px;
-        label: "Retry connection";
+        label: "RETRY CONNECTION";
         pressed => { root.key(12); }
     }
 }
