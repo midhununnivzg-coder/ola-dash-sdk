@@ -190,7 +190,7 @@ export component Host inherits Window {
         width: parent.width; height: parent.height;
         themes: root.themes;
         active-theme: root.active-theme;
-        night: HostState.night;
+        night-mode: HostState.night-mode;
         set-setting(key, value) => { root.set-setting(key, value); }
         done(id) => {
             if root.host-screens-allowed && root.first-run && !root.confirm-theme {
