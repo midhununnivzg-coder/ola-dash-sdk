@@ -112,6 +112,11 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             "platforms;android-34" "build-tools;34.0.0" "ndk;27.2.12479018" > /dev/null
 
+      - name: Generate theme preview thumbnails
+        run: |
+          cargo build --release --manifest-path sim/Cargo.toml
+          SIM=sim/target/release/sim tools/previews.sh
+
       - name: Stage Tesla-inspired theme
         run: |
           mkdir -p "$RUNNER_TEMP/ola-extra-themes"

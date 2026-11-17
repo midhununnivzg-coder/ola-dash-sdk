@@ -392,9 +392,33 @@ export component SettingsScreen inherits Rectangle {
         }
     }
     HostText {
-        x: 432px; y: root.height - 120px; width: root.width - 536px; height: 40px;
-        text: (HostState.clock-text == "" ? "--" : HostState.clock-text) + " · "
-            + (HostState.battery-pct < 0 ? "--" : HostState.battery-pct + "%");
+        x: 432px; y: root.height - 120px; width: root.width - 700px; height: 40px;
+        text: HostState.clock-text == "" ? "--" : HostState.clock-text;
+        color: LockConfig.style.muted;
+        font-size: 18px;
+        vertical-alignment: center;
+    }
+    // Battery status glyph beside the percentage in the menu footer.
+    Rectangle {
+        x: root.width - 176px; y: root.height - 105px; width: 24px; height: 14px;
+        border-radius: 3px;
+        border-width: 1.5px;
+        border-color: LockConfig.style.muted;
+        background: transparent;
+        Rectangle {
+            x: 2px; y: 2px; width: max(0px, 18px * clamp(HostState.battery-pct / 100, 0, 1)); height: 8px;
+            border-radius: 1px;
+            background: HostState.battery-pct < 15 ? #ff625f : LockConfig.style.accent;
+        }
+    }
+    Rectangle {
+        x: root.width - 151px; y: root.height - 101px; width: 3px; height: 6px;
+        border-radius: 1px;
+        background: LockConfig.style.muted;
+    }
+    HostText {
+        x: root.width - 140px; y: root.height - 120px; width: 64px; height: 40px;
+        text: HostState.battery-pct < 0 ? "--" : HostState.battery-pct + "%";
         color: LockConfig.style.muted;
         font-size: 18px;
         horizontal-alignment: right;
