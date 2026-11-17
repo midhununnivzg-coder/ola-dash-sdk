@@ -123,6 +123,43 @@ export component UnlockScreen inherits Rectangle {
 
     background: LockConfig.style.background;
 
+    // EV cockpit treatment: two softly raised glass panels, a mint identity rail,
+    // and restrained ambient highlights. Authentication and keypad logic stay host-owned.
+    Rectangle {
+        x: 72px; y: 32px; width: 444px; height: 704px;
+        border-radius: 28px;
+        background: LockConfig.style.foreground.with-alpha(0.035);
+        border-width: 1px;
+        border-color: LockConfig.style.foreground.with-alpha(0.14);
+    }
+    Rectangle {
+        x: root.kx - 24px; y: 32px; width: 644px; height: 704px;
+        border-radius: 28px;
+        background: LockConfig.style.foreground.with-alpha(0.045);
+        border-width: 1px;
+        border-color: LockConfig.style.foreground.with-alpha(0.16);
+    }
+    Rectangle {
+        x: 104px; y: 32px; width: 96px; height: 4px;
+        border-radius: 2px; background: LockConfig.style.accent;
+    }
+    Rectangle {
+        x: root.kx; y: 32px; width: 120px; height: 4px;
+        border-radius: 2px; background: LockConfig.style.accent;
+    }
+    HostText {
+        x: 104px; y: 38px; width: 360px; height: 18px;
+        text: "OLA ELECTRIC  /  EV VISION";
+        color: LockConfig.style.muted;
+        font-size: 14px; font-weight: 800; letter-spacing: 2px;
+    }
+    HostText {
+        x: root.kx; y: 38px; width: 596px; height: 18px;
+        text: "SECURE VEHICLE ACCESS";
+        color: LockConfig.style.muted;
+        font-size: 14px; font-weight: 800; letter-spacing: 2px;
+    }
+
     // Block theme interaction whenever authentication or PARK is in front.
     TouchArea { }
 
