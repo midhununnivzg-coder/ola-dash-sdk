@@ -9,6 +9,7 @@ import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.service.notification.NotificationListenerService;
 
 import dev.olatool.dash.Trace;
@@ -28,6 +29,12 @@ public final class StockMediaService extends NotificationListenerService {
     private final Handler main = new Handler(Looper.getMainLooper());
     private MediaSessionManager sessions;
     private MediaController current;
+    private final Runnable progressTicker = new Runnable() {
+        @Override public void run() {
+            if (current == null) return;
+            publish();
+        }
+    };
 
     private final MediaController.Callback callback = new MediaController.Callback() {
         @Override
@@ -64,6 +71,7 @@ public final class StockMediaService extends NotificationListenerService {
     @Override
     public void onListenerDisconnected() {
         live = null;
+        main.removeCallbacks(progressTicker);
         if (sessions != null) {
             sessions.removeOnActiveSessionsChangedListener(listener);
         }
@@ -99,14 +107,28 @@ public final class StockMediaService extends NotificationListenerService {
     }
 
     private void publish() {
+        main.removeCallbacks(progressTicker);
         if (current == null) {
-            PluginHost.setStockMedia(null, null, false);
+            PluginHost.setStockMedia(null, null, false, 0L, 0L);
             return;
         }
         MediaMetadata md = current.getMetadata();
         String title = md == null ? null : md.getString(MediaMetadata.METADATA_KEY_TITLE);
         String artist = md == null ? null : md.getString(MediaMetadata.METADATA_KEY_ARTIST);
-        PluginHost.setStockMedia(title, artist, isPlaying(current));
+        long duration = md == null ? 0L : Math.max(0L, md.getLong(MediaMetadata.METADATA_KEY_DURATION));
+        PlaybackState state = current.getPlaybackState();
+        long position = 0L;
+        if (state != null) {
+            position = Math.max(0L, state.getPosition());
+            if (state.getState() == PlaybackState.STATE_PLAYING && state.getLastPositionUpdateTime() > 0L) {
+                long elapsed = Math.max(0L, SystemClock.elapsedRealtime() - state.getLastPositionUpdateTime());
+                position += (long) (elapsed * state.getPlaybackSpeed());
+            }
+        }
+        if (duration > 0L) position = Math.min(position, duration);
+        boolean playing = isPlaying(current);
+        PluginHost.setStockMedia(title, artist, playing, position, duration);
+        if (playing) main.postDelayed(progressTicker, 500L);
     }
 
     private static boolean isPlaying(MediaController c) {
