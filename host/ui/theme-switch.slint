@@ -22,12 +22,12 @@ export component ThemeList inherits Flickable {
         border-radius: 24px;
         border-width: 1px;
         border-color: LockConfig.style.key-border;
-        property <bool> selected: root.selection == theme.id;
-        property <color> ink: self.selected ? LockConfig.on-accent : LockConfig.style.foreground;
-        property <color> secondary: self.selected ? LockConfig.on-accent : LockConfig.style.muted;
+        property <bool> selected: root.selection == theme.id || root.active-theme == theme.id;
+        property <color> ink: self.selected ? #062b27 : LockConfig.style.foreground;
+        property <color> secondary: self.selected ? #062b27 : LockConfig.style.muted;
         property <bool> has-tag: theme.id == root.active-theme || theme.source == "sideloaded";
         property <length> text-width: self.width - 168px - (self.has-tag ? 168px : 24px);
-        background: self.selected ? LockConfig.style.accent : LockConfig.style.key-background;
+        background: self.selected ? #42b8a5 : LockConfig.style.key-background;
         accessible-role: button;
         accessible-label: theme.name;
         accessible-checkable: true;
