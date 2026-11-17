@@ -75,7 +75,7 @@ export component ThemeList inherits Flickable {
 export component FirstRunScreen inherits Rectangle {
     in property <[ThemeInfo]> themes;
     in property <string> active-theme;
-    in property <bool> night;
+    in property <int> night-mode;
     callback set-setting(string, string);
     callback done(string);
     property <string> theme-selection;
@@ -117,9 +117,9 @@ export component FirstRunScreen inherits Rectangle {
         }
         Choice {
             x: 192px; y: 440px; width: parent.width - 192px;
-            options: ["Off", "On"];
-            selected: root.night ? 1 : 0;
-            chosen(index) => { root.set-setting("night", index == 0 ? "off" : "on"); }
+            options: ["Light", "Dark", "Auto"];
+            selected: root.night-mode;
+            chosen(index) => { root.set-setting("night", index == 0 ? "off" : index == 1 ? "on" : "auto"); }
         }
         PillButton {
             x: parent.width - self.width; y: 536px;
