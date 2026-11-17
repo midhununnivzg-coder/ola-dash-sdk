@@ -139,8 +139,9 @@ for state in park ride; do
         status=1
     fi
 done
-# Display choice: the default Off option uses the checked lock accent.
-got=$("$SIM" "$ROOT/themes/minimal" --contract "$ROOT/contract" --state park --screen settings --pane display --at 13 --screenshot "$png" --pixel 736,192 | tail -n 1) || got=error
+# Display choice: explicitly select Off so the test does not depend on the Auto default.
+printf '%s\n' '{"night":"off"}' > "$clock_settings"
+got=$("$SIM" "$ROOT/themes/minimal" --contract "$ROOT/contract" --settings "$clock_settings" --state park --screen settings --pane display --at 13 --screenshot "$png" --pixel 736,192 | tail -n 1) || got=error
 if [ "$got" = "#ffc94a" ]; then
     echo "ok: Display Off option selected (pixel 736,192 is $got)"
 else
