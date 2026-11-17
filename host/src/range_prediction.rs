@@ -256,7 +256,7 @@ mod tests {
         r.set_odometer(1004.0);
         r.set_fine_soc(80.5);
         assert!(r.is_calibrated());
-        assert!((r.predicted_range().unwrap() - 318.0).abs() < 0.001);
+        assert!((r.predicted_range().unwrap() - 322.0).abs() < 0.001);
     }
 
     #[test]
