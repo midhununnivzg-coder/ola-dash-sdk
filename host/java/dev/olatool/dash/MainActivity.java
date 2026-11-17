@@ -86,6 +86,16 @@ public final class MainActivity extends NativeActivity {
         VehicleBridge.openTrunk();
     }
 
+    /** Applies a per-window brightness override; Android restores system brightness outside this app. */
+    public void onSetBrightness(int percent) {
+        final int bounded = Math.max(10, Math.min(100, percent));
+        handler.post(() -> {
+            WindowManager.LayoutParams params = getWindow().getAttributes();
+            params.screenBrightness = bounded / 100.0f;
+            getWindow().setAttributes(params);
+        });
+    }
+
     /** Called synchronously by Rust before a theme-switch process exit. */
     public void onThemeExit() {
         Trace.flush();

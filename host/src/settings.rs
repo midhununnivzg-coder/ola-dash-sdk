@@ -100,6 +100,12 @@ impl Settings {
         self.values.get("clock24").and_then(Json::as_bool).unwrap_or(true)
     }
 
+    pub fn brightness(&self) -> u32 {
+        self.values.get("brightness").and_then(Json::as_u64)
+            .filter(|n| (10..=100).contains(n))
+            .map(|n| n as u32).unwrap_or(100)
+    }
+
     fn dashboard_text(&self, key: &str, default: &str) -> String {
         self.values.get(key).and_then(Json::as_str)
             .filter(|value| value.chars().count() <= 48 && !value.chars().any(char::is_control))
@@ -133,6 +139,11 @@ impl Settings {
                 Json::from(minutes)
             }
             ("clock24", "true" | "false") => Json::Bool(value == "true"),
+            ("brightness", _) => {
+                let percent = value.parse::<u32>().ok().filter(|n| (10..=100).contains(n))
+                    .ok_or_else(|| format!("settings: invalid brightness={value}"))?;
+                Json::from(percent)
+            },
             ("dashboard-model-title" | "dashboard-color" | "dashboard-capacity" | "dashboard-owner-title", _)
                 if value.chars().count() <= 48 && !value.chars().any(char::is_control) => Json::String(value.into()),
             ("setup", "done") => Json::String(value.into()),
@@ -180,10 +191,10 @@ pub fn refresh_night(ui: &ComponentInstance) -> Result<(), String> {
 
 fn apply_preferences(ui: &ComponentInstance, settings: &SharedSettings, refresh_clock: fn(&ComponentInstance)) -> Result<(), String> {
     // Release the shared borrow before updating any UI property or callback.
-    let (mode, start, end, clock24, dashboard_labels) = {
+    let (mode, start, end, clock24, brightness, dashboard_labels) = {
         let s = settings.borrow();
         (
-            s.night(), s.night_start(), s.night_end(), s.clock24(),
+            s.night(), s.night_start(), s.night_end(), s.clock24(), s.brightness(),
             [
                 ("dashboard-model-title", s.dashboard_text("dashboard-model-title", "SUPER SCOOTER S1 PRO")),
                 ("dashboard-color", s.dashboard_text("dashboard-color", "NEO MINT BLUE")),
@@ -209,17 +220,30 @@ fn apply_preferences(ui: &ComponentInstance, settings: &SharedSettings, refresh_
         .map_err(|e| format!("clock24: {e:?}"))?;
     ui.set_global_property("HostState", "clock24", Value::Bool(clock24))
         .map_err(|e| format!("HostState.clock24: {e:?}"))?;
+    ui.set_global_property("HostState", "brightness-pct", Value::Number(brightness as f64))
+        .map_err(|e| format!("HostState.brightness-pct: {e:?}"))?;
     refresh_clock(ui);
     refresh_night(ui)
 }
 
-pub fn bind(ui: &ComponentInstance, settings: SharedSettings, log: fn(&str), refresh_clock: fn(&ComponentInstance)) -> Result<(), String> {
+pub fn bind(
+    ui: &ComponentInstance,
+    settings: SharedSettings,
+    log: fn(&str),
+    refresh_clock: fn(&ComponentInstance),
+    set_brightness: impl Fn(u32) + 'static,
+) -> Result<(), String> {
     apply_preferences(ui, &settings, refresh_clock)?;
+    let set_brightness: Rc<dyn Fn(u32)> = Rc::new(set_brightness);
+    set_brightness(settings.borrow().brightness());
     let weak = ui.as_weak();
     ui.set_callback("set-setting", move |args| {
         if let [Value::String(key), Value::String(value)] = args {
             let saved = settings.borrow_mut().set(key.as_str(), value.as_str());
             let result = saved.and_then(|_| {
+                if key.as_str() == "brightness" {
+                    set_brightness(settings.borrow().brightness());
+                }
                 if key != "setup" {
                     if let Some(ui) = weak.upgrade() { apply_preferences(&ui, &settings, refresh_clock)?; }
                 }
@@ -267,7 +291,19 @@ mod tests {
         assert_eq!(settings.night_start(), NIGHT_START);
         assert_eq!(settings.night_end(), NIGHT_END);
         assert!(settings.clock24());
+        assert_eq!(settings.brightness(), 100);
         assert!(!dir.file().exists());
+    }
+
+    #[test]
+    fn brightness_is_persisted_and_rejects_out_of_range_values() {
+        let dir = Dir::new();
+        let mut settings = Settings::load(Some(&dir.file()), |_| {});
+        settings.set("brightness", "42").unwrap();
+        assert_eq!(settings.brightness(), 42);
+        assert!(settings.set("brightness", "0").is_err());
+        assert!(settings.set("brightness", "101").is_err());
+        assert_eq!(Settings::load(Some(&dir.file()), |_| {}).brightness(), 42);
     }
 
     #[test]

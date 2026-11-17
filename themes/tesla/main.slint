@@ -23,8 +23,7 @@ export component Dash inherits Window {
     property <color> mint-glow: night ? #5ce0c2 : #299c83;
     property <color> red: #ff625f;
     property <color> amber: #ffca76;
-    property <color> gold-edge: night ? #edc779.with-alpha(0.78) : #bd914d.with-alpha(0.68);
-    property <color> gold-halo: night ? #f0c36a.with-alpha(0.24) : #c9943e.with-alpha(0.18);
+    property <color> card-edge: night ? #52636c : #c5d5cf;
     property <color> wheel: night ? #11181d : #dce6e1;
     property <color> trim: night ? #b5c5c5 : #3e514b;
     property <color> black: #11191d;
@@ -85,11 +84,11 @@ export component Dash inherits Window {
     Rectangle {
         x: 1034px; y: 78px; width: 198px; height: 42px;
         border-radius: 21px; background: glass-deep.with-alpha(0.82);
-        border-width: 1px; border-color: gold-edge;
+        border-width: 1px; border-color: card-edge;
         Rectangle { x: 16px; y: 16px; width: 9px; height: 9px; border-radius: 5px; background: Vehicle.data-stale ? amber : mint-glow; }
         Text {
             x: 0px; y: 9px; width: 198px; height: 24px;
-            text: "TESLA";
+            text: "TESLA V1";
             color: ink; font-size: 16px; font-weight: 800;
             horizontal-alignment: center; vertical-alignment: center;
             letter-spacing: 3px;
@@ -97,11 +96,10 @@ export component Dash inherits Window {
     }
 
     // Speed glass module — layered translucent surfaces and a restrained accent rail.
-    Rectangle { x: 407px; y: 113px; width: 490px; height: 490px; border-radius: 34px; background: transparent; border-width: 4px; border-color: gold-halo; }
     Rectangle {
         x: 412px; y: 118px; width: 480px; height: 480px;
         border-radius: 28px; background: glass-deep.with-alpha(0.72);
-        border-width: 1px; border-color: gold-edge;
+        border-width: 1px; border-color: card-edge;
     }
     Rectangle {
         x: 412px; y: 118px; width: 5px; height: 480px;
@@ -129,11 +127,10 @@ export component Dash inherits Window {
     Text { font-weight: 700; x: 444px; y: 554px; width: 416px; height: 22px; visible: parked; text: "TAP POWER TO BEGIN YOUR RIDE"; color: faint; font-size: 15px; horizontal-alignment: center; }
 
     // Hero glass stage with the mint S1 silhouette.
-    Rectangle { x: 43px; y: 161px; width: 330px; height: 370px; border-radius: 35px; background: transparent; border-width: 4px; border-color: gold-halo; }
     Rectangle {
         x: 48px; y: 166px; width: 320px; height: 360px;
         border-radius: 30px; background: glass.with-alpha(0.52);
-        border-width: 1px; border-color: gold-edge;
+        border-width: 1px; border-color: card-edge;
     }
     Text { x: 70px; y: 192px; width: 205px; height: 24px; text: Navigation.active ? "ROUTE GUIDANCE" : Display.dashboard-owner-title; color: muted; font-size: 12px; font-weight: 700; letter-spacing: 1px; overflow: elide; }
     Text { x: 282px; y: 192px; width: 66px; height: 24px; horizontal-alignment: right; text: Display.dashboard-capacity; color: faint; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
@@ -144,7 +141,7 @@ export component Dash inherits Window {
         source: @image-url("assets/ola-s1-neo-mint.jpg");
         image-fit: contain;
     }
-    Rectangle { x: 72px; y: 454px; width: 272px; height: 1px; background: gold-edge.with-alpha(0.42); }
+    Rectangle { x: 72px; y: 454px; width: 272px; height: 1px; background: card-edge.with-alpha(0.42); }
     if Navigation.active : Text {
         x: 72px; y: 270px; width: 272px; height: 100px;
         text: Navigation.instruction; color: ink; font-size: 25px; font-weight: 700;
@@ -158,23 +155,20 @@ export component Dash inherits Window {
     Text { x: 72px; y: 480px; width: 272px; height: 22px; text: Navigation.active ? "FOLLOW THE ROUTE" : Display.dashboard-color; color: muted; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; }
 
     // Battery and range stack: glass tiles with crisp information hierarchy.
-    Rectangle { x: 911px; y: 161px; width: 326px; height: 208px; border-radius: 31px; background: transparent; border-width: 4px; border-color: gold-halo; }
-    Rectangle { x: 916px; y: 166px; width: 316px; height: 198px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: gold-edge; }
+    Rectangle { x: 916px; y: 166px; width: 316px; height: 198px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: card-edge; }
     Text { x: 944px; y: 192px; width: 240px; height: 22px; text: "BATTERY"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
     Text { x: 940px; y: 226px; width: 190px; height: 70px; text: Vehicle.battery-pct < 0 ? "--" : "" + round(battery-shown) + "%"; color: ink; font-size: 60px; font-weight: 700; letter-spacing: -2px; }
     Text { x: 944px; y: 300px; width: 240px; height: 20px; text: Vehicle.charging ? "ENERGY FLOW ACTIVE" : "ESTIMATED CHARGE"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 1px; }
     Rectangle { x: 944px; y: 334px; width: 260px; height: 8px; border-radius: 4px; background: glass-edge.with-alpha(0.45); }
     Rectangle { x: 944px; y: 334px; width: 260px * battery-fraction; height: 8px; border-radius: 4px; background: battery-shown < 15 ? red : mint-glow; }
-    Rectangle { x: 911px; y: 381px; width: 326px; height: 214px; border-radius: 31px; background: transparent; border-width: 4px; border-color: gold-halo; }
-    Rectangle { x: 916px; y: 386px; width: 316px; height: 204px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: gold-edge; }
+    Rectangle { x: 916px; y: 386px; width: 316px; height: 204px; border-radius: 26px; background: glass.with-alpha(0.72); border-width: 1px; border-color: card-edge; }
     Text { x: 944px; y: 412px; width: 240px; height: 22px; text: "ESTIMATED RANGE"; color: muted; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
     Text { x: 940px; y: 448px; width: 190px; height: 82px; text: Vehicle.range-km < 0 ? "--" : "" + Vehicle.range-km; color: ink; font-size: 74px; font-weight: 700; letter-spacing: -3px; }
     Text { x: 1090px; y: 492px; width: 90px; height: 28px; text: "km"; color: muted; font-size: 22px; font-weight: 700; }
-    Text { x: 944px; y: 548px; width: 250px; height: 20px; text: Battery.temp-max-c < 0 ? "PACK TEMPERATURE   --" : "PACK TEMPERATURE   " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 0.8px; }
+    Text { x: 944px; y: 548px; width: 250px; height: 20px; text: Battery.temp-max-c < 0 ? "BATTERY TEMP   --" : "BATTERY TEMP   " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 13px; font-weight: 700; letter-spacing: 0.8px; }
 
     // Drive mode strip.
-    Rectangle { x: 407px; y: 605px; width: 830px; height: 68px; border-radius: 25px; background: transparent; border-width: 4px; border-color: gold-halo; }
-    Rectangle { x: 412px; y: 610px; width: 820px; height: 58px; border-radius: 20px; background: glass-deep.with-alpha(0.78); border-width: 1px; border-color: gold-edge; }
+    Rectangle { x: 412px; y: 610px; width: 820px; height: 58px; border-radius: 20px; background: glass-deep.with-alpha(0.78); border-width: 1px; border-color: card-edge; }
     Text { x: 416px; y: 628px; width: 130px; height: 22px; text: "DRIVE PROFILE"; color: muted; font-size: 14px; font-weight: 700; letter-spacing: 1.4px; }
     Rectangle { x: 584px; y: 623px; width: 1px; height: 30px; background: glass-edge.with-alpha(0.6); }
     Text {
@@ -186,8 +180,7 @@ export component Dash inherits Window {
     }
 
     // Expanded music dock fills the space released by the shorter scooter hero panel.
-    Rectangle { x: 43px; y: 539px; width: 330px; height: 192px; border-radius: 27px; background: transparent; border-width: 4px; border-color: gold-halo; }
-    Rectangle { x: 48px; y: 544px; width: 320px; height: 182px; border-radius: 22px; background: glass.with-alpha(0.78); border-width: 1px; border-color: gold-edge; }
+    Rectangle { x: 48px; y: 544px; width: 320px; height: 182px; border-radius: 22px; background: glass.with-alpha(0.78); border-width: 1px; border-color: card-edge; }
     Rectangle { x: 62px; y: 562px; width: 52px; height: 52px; border-radius: 15px; background: @linear-gradient(135deg, mint-glow.with-alpha(0.65) 0%, glass-deep 100%); }
     // Draw the music-note mark with primitives so it never depends on a missing font glyph.
     Rectangle { x: 82px; y: 570px; width: 3px; height: 21px; border-radius: 1px; background: ink; }
@@ -201,31 +194,25 @@ export component Dash inherits Window {
     Rectangle { x: 62px; y: 626px; width: 266px; height: 4px; border-radius: 2px; background: glass-edge.with-alpha(0.65); }
     Rectangle { x: 62px; y: 626px; width: 266px * media-progress; height: 4px; border-radius: 2px; background: mint-glow; }
     // Larger, easier-to-hit transport and system-volume controls.
-    Rectangle { x: 62px; y: 646px; width: 266px; height: 64px; border-radius: 20px; background: glass-deep.with-alpha(0.78); border-width: 1px; border-color: gold-edge.with-alpha(0.5); }
-    Text { x: 66px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: "−"; color: ink; font-size: 25px; font-weight: 800; }
-    TouchArea { x: 62px; y: 646px; width: 48px; height: 64px; clicked => { Media.volume-down(); } }
-    Text { x: 112px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: "◀|"; color: ink; font-size: 17px; font-weight: 800; }
-    TouchArea { x: 110px; y: 646px; width: 48px; height: 64px; clicked => { Media.previous(); } }
-    Text { x: 160px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: Media.playing ? "Ⅱ" : "▶"; color: mint-glow; font-size: 21px; font-weight: 800; }
-    TouchArea { x: 158px; y: 646px; width: 48px; height: 64px; clicked => { Media.play-pause(); } }
-    Text { x: 208px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: "|▶"; color: ink; font-size: 17px; font-weight: 800; }
-    TouchArea { x: 206px; y: 646px; width: 48px; height: 64px; clicked => { Media.next(); } }
-    Text { x: 256px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: "+"; color: ink; font-size: 24px; font-weight: 800; }
-    TouchArea { x: 254px; y: 646px; width: 48px; height: 64px; clicked => { Media.volume-up(); } }
-
-    Rectangle { x: 387px; y: 681px; width: 850px; height: 50px; border-radius: 25px; background: transparent; border-width: 4px; border-color: gold-halo; }
-    Rectangle { x: 392px; y: 686px; width: 840px; height: 40px; border-radius: 20px; background: glass-deep.with-alpha(0.58); border-width: 1px; border-color: gold-edge; }
+    Rectangle { x: 62px; y: 646px; width: 266px; height: 64px; border-radius: 20px; background: glass-deep.with-alpha(0.78); border-width: 1px; border-color: card-edge.with-alpha(0.5); }
+    Text { x: 85px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: "−"; color: ink; font-size: 25px; font-weight: 800; }
+    TouchArea { x: 85px; y: 646px; width: 42px; height: 64px; clicked => { Media.volume-down(); } }
+    Text { x: 135px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: "◀|"; color: ink; font-size: 17px; font-weight: 800; }
+    TouchArea { x: 135px; y: 646px; width: 42px; height: 64px; clicked => { Media.previous(); } }
+    Text { x: 185px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: Media.playing ? "Ⅱ" : "▶"; color: mint-glow; font-size: 21px; font-weight: 800; }
+    TouchArea { x: 185px; y: 646px; width: 42px; height: 64px; clicked => { Media.play-pause(); } }
+    Text { x: 235px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: "|▶"; color: ink; font-size: 17px; font-weight: 800; }
+    TouchArea { x: 235px; y: 646px; width: 42px; height: 64px; clicked => { Media.next(); } }
+    Text { x: 285px; y: 648px; width: 42px; height: 60px; horizontal-alignment: center; vertical-alignment: center; text: "+"; color: ink; font-size: 24px; font-weight: 800; }
+    TouchArea { x: 285px; y: 646px; width: 42px; height: 64px; clicked => { Media.volume-up(); } }
+    Rectangle { x: 392px; y: 686px; width: 840px; height: 40px; border-radius: 20px; background: glass-deep.with-alpha(0.58); border-width: 1px; border-color: card-edge; }
     Text { x: 408px; y: 692px; width: 160px; height: 28px; text: "MOD BY M@DDY"; color: muted; font-size: 17px; font-weight: 800; letter-spacing: 1.1px; }
     Text { x: 588px; y: 692px; width: 190px; height: 28px; text: Vehicle.odometer-km < 0 ? "ODO  -- km" : "ODO  " + round(Vehicle.odometer-km) + " km"; color: muted; font-size: 17px; font-weight: 800; }
-    Text { x: 786px; y: 692px; width: 190px; height: 28px; text: Battery.temp-max-c < 0 ? "PACK  --°C" : "PACK  " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 17px; font-weight: 800; }
-
-    Rectangle { x: 983px; y: 681px; width: 122px; height: 50px; border-radius: 22px; background: transparent; border-width: 4px; border-color: gold-halo; }
-    Rectangle { x: 988px; y: 686px; width: 112px; height: 40px; border-radius: 17px; background: glass.with-alpha(0.88); border-width: 1px; border-color: gold-edge; }
+    Text { x: 786px; y: 692px; width: 190px; height: 28px; text: Battery.temp-max-c < 0 ? "BATTERY TEMP  --°C" : "BATTERY TEMP  " + round(Battery.temp-max-c) + "°C"; color: muted; font-size: 17px; font-weight: 800; }
+    Rectangle { x: 988px; y: 686px; width: 112px; height: 40px; border-radius: 17px; background: glass.with-alpha(0.88); border-width: 1px; border-color: card-edge; }
     Text { x: 988px; y: 686px; width: 112px; height: 40px; horizontal-alignment: center; vertical-alignment: center; text: "AA  ↗"; color: ink; font-size: 16px; font-weight: 700; }
     TouchArea { x: 988px; y: 686px; width: 112px; height: 40px; clicked => { Actions.open-android-auto(); } }
-
-    Rectangle { x: 1105px; y: 681px; width: 132px; height: 50px; border-radius: 22px; background: transparent; border-width: 4px; border-color: gold-halo; }
-    Rectangle { x: 1110px; y: 686px; width: 122px; height: 40px; border-radius: 17px; background: trunk-ready || Vehicle.trunk-open ? glass.with-alpha(0.88) : glass-deep.with-alpha(0.55); border-width: 1px; border-color: Vehicle.trunk-open ? red : gold-edge; opacity: trunk-ready || Vehicle.trunk-open ? 1 : 0.45; }
+    Rectangle { x: 1110px; y: 686px; width: 122px; height: 40px; border-radius: 17px; background: trunk-ready || Vehicle.trunk-open ? glass.with-alpha(0.88) : glass-deep.with-alpha(0.55); border-width: 1px; border-color: Vehicle.trunk-open ? red : card-edge; opacity: trunk-ready || Vehicle.trunk-open ? 1 : 0.45; }
     // Factory-style scooter boot/storage icon, resized to sit neatly inside the footer pill.
     Rectangle { x: 1156px; y: 696px; width: 30px; height: 10px; border-radius: 3px; background: glass-edge; border-width: 1px; border-color: trim; }
     Rectangle { x: 1159px; y: 698px; width: 24px; height: 2px; background: glass-highlight; }

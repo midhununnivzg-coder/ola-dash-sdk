@@ -4,6 +4,7 @@ import { LockConfig } from "unlock.slint";
 import { HostText } from "hosttext.slint";
 import { RailRow, CloseButton, Pane, Choice, PillButton, Stepper, Swatches, OptionSwatch } from "kit.slint";
 import { ThemeInfo, ThemeList } from "theme-switch.slint";
+import { Slider } from "std-widgets.slint";
 
 export struct PluginInfo {
     package: string,
@@ -135,9 +136,13 @@ export component SettingsScreen inherits Rectangle {
     if root.pane == "Display" : Pane {
         x: 432px; y: 88px; width: root.width - 640px; height: root.height - 248px;
         title: "Display";
-        Rectangle {
+        Flickable {
             x: 0px; y: 0px; width: parent.width; height: parent.body-height;
+            content-width: self.width;
+            content-height: 520px;
             Rectangle {
+                x: 0px; y: 0px; width: parent.width; height: 520px;
+                Rectangle {
                 x: 0px; y: 0px; width: parent.width; height: 64px;
                 HostText {
                     x: 0px; y: 0px; width: parent.width - 444px; height: parent.height;
@@ -211,6 +216,36 @@ export component SettingsScreen inherits Rectangle {
                     options: ["24-hour", "12-hour"];
                     selected: root.clock24 ? 0 : 1;
                     chosen(index) => { root.set-setting("clock24", index == 0 ? "true" : "false"); }
+                }
+            }
+            Rectangle {
+                x: 0px;
+                y: HostState.night-mode == 2 ? (HostState.clock-trusted ? 368px : 408px) : 176px;
+                width: parent.width;
+                height: 72px;
+                HostText {
+                    x: 0px; y: 0px; width: 190px; height: parent.height;
+                    text: "Screen brightness";
+                    color: LockConfig.style.foreground;
+                    font-size: 24px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+                Slider {
+                    x: 204px; y: 4px; width: 360px; height: 64px;
+                    minimum: 10;
+                    maximum: 100;
+                    value: HostState.brightness-pct;
+                    changed => { root.set-setting("brightness", round(self.value) + ""); }
+                }
+                HostText {
+                    x: 572px; y: 0px; width: 68px; height: parent.height;
+                    text: HostState.brightness-pct + "%";
+                    color: LockConfig.style.muted;
+                    font-size: 22px;
+                    font-weight: 700;
+                    horizontal-alignment: right;
+                    vertical-alignment: center;
                 }
             }
         }

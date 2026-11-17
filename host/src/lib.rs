@@ -213,6 +213,24 @@ fn request_trunk(app: &AndroidApp) {
     }
 }
 
+/// Applies the settings slider to this activity's window (not the global Android setting).
+fn set_screen_brightness(app: &AndroidApp, percent: u32) {
+    let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
+    let result = vm.attach_current_thread(|env| -> jni::errors::Result<()> {
+        let activity = ManuallyDrop::new(unsafe {
+            JObject::from_raw(&*env, app.activity_as_ptr() as jni::sys::jobject)
+        });
+        env.call_method(
+            &*activity,
+            jni_str!("onSetBrightness"),
+            jni_sig!("(I)V"),
+            &[JValue::Int(percent as i32)],
+        )?;
+        Ok(())
+    });
+    if result.is_err() { log::warn!("screen brightness bridge unavailable"); }
+}
+
 /// Sends media, widget or host refresh actions through MainActivity.onDashAction.
 fn dash_action(app: &AndroidApp, action: &str) {
     let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
@@ -702,7 +720,9 @@ fn run(app: &AndroidApp, start: Instant) -> Result<(), String> {
         .map_err(|e| format!("active-theme: {e:?}"))?;
     ui.set_property("first-run", Value::Bool(!settings.borrow().setup_done()))
         .map_err(|e| format!("first-run: {e:?}"))?;
-    settings::bind(&ui, settings, log_warn, refresh_clock)?;
+    let brightness_app = app.clone();
+    settings::bind(&ui, settings, log_warn, refresh_clock,
+        move |percent| set_screen_brightness(&brightness_app, percent))?;
     ui.set_global_property("HostState", "version-text", Value::String(env!("CARGO_PKG_VERSION").into()))
         .map_err(|e| format!("HostState.version-text: {e:?}"))?;
     wire(&ui, app)?;
