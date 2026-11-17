@@ -40,14 +40,14 @@ component Key inherits Rectangle {
     property <color> fill: root.strong ? LockConfig.style.accent
         : root.quiet && !root.grid ? transparent
         : LockConfig.style.key-background;
-    border-radius: LockConfig.style.key-shape == LockKeyShape.rounded ? 18px
+    border-radius: LockConfig.style.key-shape == LockKeyShape.rounded ? 28px
         : LockConfig.style.key-shape == LockKeyShape.square ? 4px : 0px;
     border-width: root.grid || root.quiet || root.strong ? 0px : 1px;
     border-color: LockConfig.style.key-border;
     // Disabled keys fade toward the screen; pressed keys lean toward the text colour.
     background: !root.enabled ? (root.quiet && !root.grid ? transparent : root.fill.mix(LockConfig.style.background, 0.5))
-        : touch.pressed ? root.fill.mix(root.ink, 0.15)
-        : root.fill;
+         : touch.pressed ? root.fill.mix(root.ink, 0.15).with-alpha(0.88)
+        : root.fill.with-alpha(0.80);
     accessible-role: button;
     accessible-label: label;
     accessible-enabled: enabled;
@@ -68,6 +68,11 @@ component Key inherits Rectangle {
         font-weight: 700;
         horizontal-alignment: center;
         vertical-alignment: center;
+    }
+    Rectangle {
+        x: 7px; y: 5px; width: parent.width - 14px; height: 2px;
+        border-radius: 1px;
+        background: LockConfig.style.foreground.with-alpha(0.12);
     }
     touch := TouchArea {
         enabled: root.enabled;
@@ -166,16 +171,17 @@ export component UnlockScreen inherits Rectangle {
     // ---- left column: clock, date, battery (the strip carries lock and charging) ----
     clock := HostText {
         visible: !root.segment || root.clock-hhmm < 0;
-        x: 104px; y: 60px; width: self.preferred-width; height: 144px;
+        x: 72px; y: 60px; width: 444px; height: 144px;
         text: root.clock-label;
         color: LockConfig.style.foreground;
-        font-size: 120px;
+        font-size: 112px;
         font-weight: 800;
+        horizontal-alignment: center;
         vertical-alignment: center;
     }
     segment-clock := Rectangle {
         visible: root.segment && root.clock-hhmm >= 0;
-        x: 104px; y: 76px; width: root.short-hour ? 204px : 268px; height: 112px;
+        x: 72px + (444px - (root.short-hour ? 204px : 268px)) / 2; y: 76px; width: root.short-hour ? 204px : 268px; height: 112px;
         background: transparent;
         LockSegDigit {
             visible: !root.short-hour;
@@ -212,37 +218,39 @@ export component UnlockScreen inherits Rectangle {
         font-weight: 700;
     }
     HostText {
-        x: 104px; y: 208px; width: 444px; height: 32px;
+        x: 72px; y: 208px; width: 444px; height: 32px;
         text: root.date-text;
         color: LockConfig.style.muted;
         font-size: 22px;
+        horizontal-alignment: center;
         vertical-alignment: center;
     }
     if !root.segment : HostText {
-        x: 104px; y: 256px; width: 240px; height: 56px;
+        x: 72px; y: 256px; width: 444px; height: 56px;
         text: root.battery-pct < 0 ? "--" : root.battery-pct + "%";
         color: LockConfig.style.foreground;
-        font-size: 44px;
+        font-size: 48px;
         font-weight: 700;
+        horizontal-alignment: center;
         vertical-alignment: center;
     }
     if root.segment : Rectangle {
-        x: 104px; y: 264px; width: 240px; height: 40px;
+        x: 72px; y: 264px; width: 444px; height: 40px;
         background: transparent;
         LockSegDigit {
-            x: 0px; width: 22px; height: 40px; ink: LockConfig.style.foreground;
+            x: 174px; width: 22px; height: 40px; ink: LockConfig.style.foreground;
             digit: root.pct >= 100 ? 1 : -1;
         }
         LockSegDigit {
-            x: 26px; width: 22px; height: 40px; ink: LockConfig.style.foreground;
+            x: 200px; width: 22px; height: 40px; ink: LockConfig.style.foreground;
             digit: root.pct >= 10 ? Math.mod(floor(root.pct / 10), 10) : -1;
         }
         LockSegDigit {
-            x: 52px; width: 22px; height: 40px; ink: LockConfig.style.foreground;
+            x: 226px; width: 22px; height: 40px; ink: LockConfig.style.foreground;
             digit: root.pct < 0 ? -1 : Math.mod(root.pct, 10);
         }
         HostText {
-            x: 80px; y: 0px; width: 40px; height: 40px;
+            x: 254px; y: 0px; width: 40px; height: 40px;
             text: root.pct < 0 ? "--" : "%";
             color: LockConfig.style.foreground;
             font-size: 26px;
@@ -260,7 +268,7 @@ export component UnlockScreen inherits Rectangle {
             : root.attempts == 0 ? (root.cooldown > 0 ? "Try again in " + root.cooldown + " s" : "Try again shortly")
             : "Enter your scooter passcode";
         color: LockConfig.style.foreground;
-        font-size: 40px;
+        font-size: 32px;
         font-weight: 800;
         overflow: elide;
         vertical-alignment: center;
