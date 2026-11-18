@@ -27,6 +27,14 @@ final class UnlockController {
     private boolean bound, refreshing;
     private volatile int generation;
     private long cooldownUntil;
+    // Avoid sending unchanged authentication values to Slint on every one-second tick.
+    // Repeated no-op writes can invalidate the keypad subtree on slower Android panels.
+    private int lastPhase = Integer.MIN_VALUE;
+    private int lastPinLength = Integer.MIN_VALUE;
+    private int lastAttempts = Integer.MIN_VALUE;
+    private int lastError = Integer.MIN_VALUE;
+    private int lastCooldown = Integer.MIN_VALUE;
+    private int lastAvailable = Integer.MIN_VALUE;
     private static final long RETRY_MS = 3000, UNLOCK_TIMEOUT_MS = 10_000;
 
     UnlockController(Context context, Output output) {
@@ -308,11 +316,36 @@ final class UnlockController {
     };
 
     private void publish() {
-        output.set(VehicleBridge.AUTH_PHASE, session.displayPhase());
-        output.set(VehicleBridge.PIN_LENGTH, session.digitCount());
-        output.set(VehicleBridge.AUTH_ATTEMPTS, session.attempts);
-        output.set(VehicleBridge.AUTH_ERROR, session.error);
-        output.set(VehicleBridge.AUTH_COOLDOWN, session.cooldownSeconds);
-        output.set(VehicleBridge.AUTH_AVAILABLE, session.canEnter() ? 1 : 0);
+        int phase = session.displayPhase();
+        int pinLength = session.digitCount();
+        int attempts = session.attempts;
+        int error = session.error;
+        int cooldown = session.cooldownSeconds;
+        int available = session.canEnter() ? 1 : 0;
+
+        if (phase != lastPhase) {
+            output.set(VehicleBridge.AUTH_PHASE, phase);
+            lastPhase = phase;
+        }
+        if (pinLength != lastPinLength) {
+            output.set(VehicleBridge.PIN_LENGTH, pinLength);
+            lastPinLength = pinLength;
+        }
+        if (attempts != lastAttempts) {
+            output.set(VehicleBridge.AUTH_ATTEMPTS, attempts);
+            lastAttempts = attempts;
+        }
+        if (error != lastError) {
+            output.set(VehicleBridge.AUTH_ERROR, error);
+            lastError = error;
+        }
+        if (cooldown != lastCooldown) {
+            output.set(VehicleBridge.AUTH_COOLDOWN, cooldown);
+            lastCooldown = cooldown;
+        }
+        if (available != lastAvailable) {
+            output.set(VehicleBridge.AUTH_AVAILABLE, available);
+            lastAvailable = available;
+        }
     }
 }

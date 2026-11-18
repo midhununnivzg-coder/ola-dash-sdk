@@ -18,6 +18,7 @@ use slint::{ModelRc, VecModel};
 use slint_interpreter::{Compiler, ComponentHandle, ComponentInstance, Value};
 
 mod plugins;
+mod range_prediction;
 mod settings;
 mod theme_options;
 mod theme_root;
@@ -80,7 +81,7 @@ const FALLBACK: &str = "fallback"; // bundled copy of themes/default
 const LAST_RESORT: &str = "last-resort"; // bundled placeholder, cannot fail to compile
 const HEADUNIT_PKG: &str = "com.andrerinas.headunitrevived";
 /// Highest contract version this host implements (contract/vehicle.slint `contract-version`).
-const HOST_CONTRACT: i64 = 7;
+const HOST_CONTRACT: i64 = 9;
 
 /// Latest value per field, coalesced until the UI thread applies it.
 static PENDING: Mutex<[Option<f64>; SLOTS]> = Mutex::new([None; SLOTS]);
@@ -91,6 +92,8 @@ static LAST_HHMM: AtomicU32 = AtomicU32::new(u32::MAX);
 static TOUCHED: AtomicBool = AtomicBool::new(false);
 /// Latest plugin snapshot from PluginHost.java (JSON), applied on the UI thread.
 static PLUGINS: Mutex<Option<String>> = Mutex::new(None);
+static RANGE_PREDICTOR: Mutex<range_prediction::RangeEstimator> =
+    Mutex::new(range_prediction::RangeEstimator::new());
 
 /// Called once a second by the Java keep-alive tick; reading clears the flag.
 #[unsafe(no_mangle)]
@@ -181,6 +184,8 @@ fn apply_plugins(ui: &ComponentInstance, json: &str) {
     set("Media", "title", text(m, "title"));
     set("Media", "artist", text(m, "artist"));
     set("Media", "playing", Value::Bool(m["playing"].as_bool().unwrap_or(false)));
+    set("Media", "position-ms", Value::Number(m["positionMs"].as_f64().unwrap_or(0.0)));
+    set("Media", "duration-ms", Value::Number(m["durationMs"].as_f64().unwrap_or(0.0)));
     let n = &v["nav"];
     set("Navigation", "active", Value::Bool(n["active"].as_bool().unwrap_or(false)));
     set("Navigation", "instruction", text(n, "instruction"));
@@ -211,6 +216,47 @@ fn request_trunk(app: &AndroidApp) {
     }
 }
 
+/// Reads the current effective window/system brightness for the slider's initial position.
+fn get_screen_brightness(app: &AndroidApp) -> u32 {
+    let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
+    let result = vm.attach_current_thread(|env| -> jni::errors::Result<i32> {
+        let activity = ManuallyDrop::new(unsafe {
+            JObject::from_raw(&*env, app.activity_as_ptr() as jni::sys::jobject)
+        });
+        Ok(env.call_method(
+            &*activity,
+            jni_str!("onGetScreenBrightness"),
+            jni_sig!("()I"),
+            &[],
+        )?.i()?)
+    });
+    match result {
+        Ok(percent) => percent.clamp(10, 100) as u32,
+        Err(e) => {
+            log::warn!("screen brightness read unavailable: {e}");
+            100
+        }
+    }
+}
+
+/// Applies the settings slider to this activity's window (not the global Android setting).
+fn set_screen_brightness(app: &AndroidApp, percent: u32) {
+    let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
+    let result = vm.attach_current_thread(|env| -> jni::errors::Result<()> {
+        let activity = ManuallyDrop::new(unsafe {
+            JObject::from_raw(&*env, app.activity_as_ptr() as jni::sys::jobject)
+        });
+        env.call_method(
+            &*activity,
+            jni_str!("onSetBrightness"),
+            jni_sig!("(I)V"),
+            &[JValue::Int(percent as i32)],
+        )?;
+        Ok(())
+    });
+    if result.is_err() { log::warn!("screen brightness bridge unavailable"); }
+}
+
 /// Sends media, widget or host refresh actions through MainActivity.onDashAction.
 fn dash_action(app: &AndroidApp, action: &str) {
     let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
@@ -228,7 +274,31 @@ fn dash_action(app: &AndroidApp, action: &str) {
     }
 }
 
+fn apply_range_prediction(ui: &ComponentInstance, id: usize, v: f64) {
+    let mut predictor = RANGE_PREDICTOR.lock().unwrap();
+    let changed = match id {
+        RANGE_KM => { predictor.set_range(v); true }
+        BATTERY_PCT => { predictor.set_battery_pct(v); true }
+        ODO_KM => { predictor.set_odometer(v); true }
+        SOC_PCT => { predictor.set_fine_soc(v); true }
+        CHARGING => { predictor.set_charging(v != 0.0); true }
+        TEST_MODE => { predictor.reset(); true }
+        _ => false,
+    };
+    if changed {
+        let value = predictor.predicted_range().unwrap_or(-1.0);
+        let calibrated = predictor.is_calibrated();
+        if let Err(e) = ui.set_global_property("Vehicle", "predicted-range-km", Value::Number(value)) {
+            log::warn!("set Vehicle.predicted-range-km failed: {e:?}");
+        }
+        if let Err(e) = ui.set_global_property("Vehicle", "range-calibrated", Value::Bool(calibrated)) {
+            log::warn!("set Vehicle.range-calibrated failed: {e:?}");
+        }
+    }
+}
+
 fn apply(ui: &ComponentInstance, id: usize, v: f64) {
+    apply_range_prediction(ui, id, v);
     let b = Value::Bool(v != 0.0);
     let n = Value::Number(v);
     let (global, prop, val) = match id {
@@ -498,7 +568,7 @@ fn wire(ui: &ComponentInstance, app: &AndroidApp) -> Result<(), String> {
     })
     .map_err(err)?;
     // Media and widget taps go to the plugin host (display-only; it routes to the owner).
-    for name in ["play-pause", "next", "previous"] {
+    for name in ["play-pause", "next", "previous", "volume-up", "volume-down"] {
         let a = app.clone();
         ui.set_global_callback("Media", name, move |_| {
             dash_action(&a, &format!("media.{name}"));
@@ -658,6 +728,38 @@ fn wire_plugins(ui: &ComponentInstance, app: &AndroidApp, files: &Path) -> Resul
     }).map_err(|e| format!("set-plugin: {e:?}"))
 }
 
+/// Reports a successful first frame to the Java-side startup watchdog.
+fn notify_first_frame(app: &AndroidApp) {
+    let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
+    let result = vm.attach_current_thread(|env| -> jni::errors::Result<()> {
+        let activity = ManuallyDrop::new(unsafe {
+            JObject::from_raw(&*env, app.activity_as_ptr() as jni::sys::jobject)
+        });
+        env.call_method(&*activity, jni_str!("onNativeFirstFrame"), jni_sig!("()V"), &[])?;
+        Ok(())
+    });
+    if let Err(e) = result { log::warn!("first-frame notification failed: {e}"); }
+}
+
+/// Displays native startup failures instead of leaving only the Android window background visible.
+fn notify_startup_error(app: &AndroidApp, message: &str) {
+    let vm = unsafe { JavaVM::from_raw(app.vm_as_ptr() as *mut _) };
+    let result = vm.attach_current_thread(|env| -> jni::errors::Result<()> {
+        let activity = ManuallyDrop::new(unsafe {
+            JObject::from_raw(&*env, app.activity_as_ptr() as jni::sys::jobject)
+        });
+        let message = env.new_string(message)?;
+        env.call_method(
+            &*activity,
+            jni_str!("onNativeStartupError"),
+            jni_sig!("(Ljava/lang/String;)V"),
+            &[JValue::Object(&message)],
+        )?;
+        Ok(())
+    });
+    if let Err(e) = result { log::error!("startup error notification failed: {e}"); }
+}
+
 fn run(app: &AndroidApp, start: Instant) -> Result<(), String> {
     let files = app.internal_data_path().ok_or("no internal data path")?;
     let settings = Rc::new(RefCell::new(settings::Settings::load(Some(&files.join("settings.json")), log_warn)));
@@ -668,7 +770,10 @@ fn run(app: &AndroidApp, start: Instant) -> Result<(), String> {
         .map_err(|e| format!("active-theme: {e:?}"))?;
     ui.set_property("first-run", Value::Bool(!settings.borrow().setup_done()))
         .map_err(|e| format!("first-run: {e:?}"))?;
-    settings::bind(&ui, settings, log_warn, refresh_clock)?;
+    let system_brightness = get_screen_brightness(app);
+    let brightness_app = app.clone();
+    settings::bind(&ui, settings, log_warn, refresh_clock, system_brightness,
+        move |percent| set_screen_brightness(&brightness_app, percent))?;
     ui.set_global_property("HostState", "version-text", Value::String(env!("CARGO_PKG_VERSION").into()))
         .map_err(|e| format!("HostState.version-text: {e:?}"))?;
     wire(&ui, app)?;
@@ -681,10 +786,12 @@ fn run(app: &AndroidApp, start: Instant) -> Result<(), String> {
         .map_err(|e| format!("HostState.restart-name: {e:?}"))?;
     // First frame is measured from android_main entry (the load start), not process start.
     let mut first = Some(start);
+    let frame_app = app.clone();
     if let Err(e) = ui.window().set_rendering_notifier(move |state, _| {
         if let (slint::RenderingState::AfterRendering, Some(t)) = (state, first) {
             first = None;
             timing("first-frame", t);
+            notify_first_frame(&frame_app);
         }
     }) {
         log::warn!("first-frame timing unavailable: {e:?}");
@@ -725,10 +832,12 @@ fn android_main(app: android_activity::AndroidApp) {
     };
     if let Err(e) = slint::android::init_with_event_listener(app.clone(), listener) {
         log::error!("slint android init failed: {e}");
+        notify_startup_error(&app, &format!("Slint Android initialisation failed: {e}"));
         return;
     }
     if let Err(e) = run(&app, start) {
         log::error!("fatal: {e}");
+        notify_startup_error(&app, &format!("Ola Dash could not build or start its dashboard: {e}"));
         // files/ may be damaged: recopy the bundled assets on the next start.
         if let Some(files) = app.internal_data_path() {
             let _ = std::fs::remove_file(files.join(".assets-stamp"));

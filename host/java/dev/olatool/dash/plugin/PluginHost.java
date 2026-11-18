@@ -104,6 +104,8 @@ public final class PluginHost {
         }
         if (action.equals("plugins.refresh")) {
             refresh();
+        } else if (action.equals("media.volume-up") || action.equals("media.volume-down")) {
+            StockMediaService.adjustVolume(app, action);
         } else if (action.startsWith("media.")) {
             MediaInfo m = displayMedia();
             if (m != null && m.owner != null) {
@@ -124,8 +126,9 @@ public final class PluginHost {
     }
 
     /** Main thread. Built-in source update; title null means no session. */
-    static void setStockMedia(String title, String artist, boolean playing) {
-        stock = title == null ? null : new MediaInfo(clip(title, MAX_LONG), clip(artist, MAX_LONG), playing, ++seq, null);
+    static void setStockMedia(String title, String artist, boolean playing, long positionMs, long durationMs) {
+        stock = title == null ? null : new MediaInfo(clip(title, MAX_LONG), clip(artist, MAX_LONG),
+                playing, Math.max(0L, positionMs), Math.max(0L, durationMs), ++seq, null);
         schedulePush();
     }
 
@@ -345,7 +348,9 @@ public final class PluginHost {
             MediaInfo m = displayMedia();
             JSONObject media = new JSONObject().put("title", m == null ? "" : m.title)
                     .put("artist", m == null ? "" : m.artist)
-                    .put("playing", m != null && m.playing);
+                    .put("playing", m != null && m.playing)
+                    .put("positionMs", m == null ? 0L : m.positionMs)
+                    .put("durationMs", m == null ? 0L : m.durationMs);
             Nav n = displayNav();
             JSONObject nav = new JSONObject().put("active", n != null)
                     .put("instruction", n == null ? "" : n.instruction)
@@ -391,7 +396,7 @@ public final class PluginHost {
             return;
         }
         e.media = title == null || title.isEmpty() ? null
-                : new MediaInfo(clip(title, MAX_LONG), clip(artist, MAX_LONG), playing, ++seq, e);
+                : new MediaInfo(clip(title, MAX_LONG), clip(artist, MAX_LONG), playing, 0L, 0L, ++seq, e);
         schedulePush();
     }
 
@@ -436,13 +441,16 @@ public final class PluginHost {
     private static final class MediaInfo {
         final String title, artist;
         final boolean playing;
+        final long positionMs, durationMs;
         final long seq;
         final Entry owner; // null for the built-in source
 
-        MediaInfo(String title, String artist, boolean playing, long seq, Entry owner) {
+        MediaInfo(String title, String artist, boolean playing, long positionMs, long durationMs, long seq, Entry owner) {
             this.title = title;
             this.artist = artist;
             this.playing = playing;
+            this.positionMs = positionMs;
+            this.durationMs = durationMs;
             this.seq = seq;
             this.owner = owner;
         }

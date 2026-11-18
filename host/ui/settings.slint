@@ -1,9 +1,10 @@
-import { Vehicle } from "vehicle.slint";
+import { Vehicle, Display } from "vehicle.slint";
 import { HostState } from "overlay.slint";
 import { LockConfig } from "unlock.slint";
 import { HostText } from "hosttext.slint";
 import { RailRow, CloseButton, Pane, Choice, PillButton, Stepper, Swatches, OptionSwatch } from "kit.slint";
 import { ThemeInfo, ThemeList } from "theme-switch.slint";
+import { Slider } from "std-widgets.slint";
 
 export struct PluginInfo {
     package: string,
@@ -27,6 +28,53 @@ export struct ThemeOptionInfo {
     swatches: [OptionSwatch],
 }
 
+// Keep edits local while the Android IME is active. Saving on a short debounce
+// refreshed the host Display model mid-typing and could dismiss the soft keyboard.
+component DashboardTextField inherits Rectangle {
+    in property <string> label;
+    in property <string> key;
+    in property <string> value;
+    callback commit(string, string);
+    property <string> draft: root.value;
+
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: LockConfig.style.key-border;
+    background: LockConfig.style.key-background;
+    HostText {
+        x: 18px; y: 0px; width: 166px; height: parent.height;
+        text: root.label;
+        color: LockConfig.style.foreground;
+        font-size: 18px;
+        font-weight: 700;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+    Rectangle {
+        x: 190px; y: 6px; width: parent.width - 204px; height: 44px;
+        border-radius: 12px;
+        border-width: 1px;
+        border-color: LockConfig.style.key-border;
+        background: LockConfig.style.background;
+        TextInput {
+            x: 12px; y: 0px; width: parent.width - 24px; height: parent.height;
+            text <=> root.draft;
+            color: LockConfig.style.foreground;
+            font-size: 18px;
+            font-weight: 700;
+            vertical-alignment: center;
+            accepted => {
+                if root.draft != root.value { root.commit(root.key, root.draft); }
+            }
+            changed has-focus => {
+                if !self.has-focus && root.draft != root.value {
+                    root.commit(root.key, root.draft);
+                }
+            }
+        }
+    }
+}
+
 // Interactive host screen: parked only, enforced by Host in theme_root.rs.
 export component SettingsScreen inherits Rectangle {
     callback closed();
@@ -43,7 +91,7 @@ export component SettingsScreen inherits Rectangle {
     in property <string> active-theme;
     in property <bool> clock24: true;
     in-out property <int> selected: 0;
-    property <[string]> panes: ["Display", "Theme", "Plugins", "About"];
+    property <[string]> panes: ["Display", "Dashboard", "Theme", "Plugins", "About"];
     property <string> pane: panes[selected];
     in-out property <int> cursor: 0;
     property <string> theme-selection;
@@ -88,9 +136,13 @@ export component SettingsScreen inherits Rectangle {
     if root.pane == "Display" : Pane {
         x: 432px; y: 88px; width: root.width - 640px; height: root.height - 248px;
         title: "Display";
-        Rectangle {
+        Flickable {
             x: 0px; y: 0px; width: parent.width; height: parent.body-height;
+            content-width: self.width;
+            content-height: 520px;
             Rectangle {
+                x: 0px; y: 0px; width: parent.width; height: 520px;
+                Rectangle {
                 x: 0px; y: 0px; width: parent.width; height: 64px;
                 HostText {
                     x: 0px; y: 0px; width: parent.width - 444px; height: parent.height;
@@ -165,6 +217,59 @@ export component SettingsScreen inherits Rectangle {
                     selected: root.clock24 ? 0 : 1;
                     chosen(index) => { root.set-setting("clock24", index == 0 ? "true" : "false"); }
                 }
+            }
+            Rectangle {
+                x: 0px;
+                y: HostState.night-mode == 2 ? (HostState.clock-trusted ? 368px : 408px) : 176px;
+                width: parent.width;
+                height: 72px;
+                HostText {
+                    x: 0px; y: 0px; width: 190px; height: parent.height;
+                    text: "Screen brightness";
+                    color: LockConfig.style.foreground;
+                    font-size: 24px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+                Slider {
+                    x: 204px; y: 4px; width: 360px; height: 64px;
+                    minimum: 10;
+                    maximum: 100;
+                    value: HostState.brightness-pct;
+                    changed(value) => { root.set-setting("brightness", round(value) + ""); }
+                }
+                HostText {
+                    x: 572px; y: 0px; width: 68px; height: parent.height;
+                    text: HostState.brightness-pct + "%";
+                    color: LockConfig.style.muted;
+                    font-size: 22px;
+                    font-weight: 700;
+                    horizontal-alignment: right;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+    }
+    if root.pane == "Dashboard" : Pane {
+        x: 432px; y: 88px; width: root.width - 640px; height: root.height - 248px;
+        title: "Edit Dashboard";
+        Rectangle {
+            x: 0px; y: 0px; width: parent.width; height: parent.body-height;
+            for field[i] in [
+                { label: "User Name", value: Display.dashboard-model-title, key: "dashboard-model-title" },
+            ] : DashboardTextField {
+                x: 0px; y: i * 64px; width: parent.width; height: 56px;
+                label: field.label;
+                value: field.value;
+                key: field.key;
+                commit(key, value) => { root.set-setting(key, value); }
+            }
+            HostText {
+                x: 4px; y: 72px; width: parent.width - 8px; height: 24px;
+                text: "Only the user name can be edited.";
+                color: LockConfig.style.muted;
+                font-size: 15px;
             }
         }
     }
@@ -320,9 +425,33 @@ export component SettingsScreen inherits Rectangle {
         }
     }
     HostText {
-        x: 432px; y: root.height - 120px; width: root.width - 536px; height: 40px;
-        text: (HostState.clock-text == "" ? "--" : HostState.clock-text) + " · "
-            + (HostState.battery-pct < 0 ? "--" : HostState.battery-pct + "%");
+        x: 432px; y: root.height - 120px; width: root.width - 700px; height: 40px;
+        text: HostState.clock-text == "" ? "--" : HostState.clock-text;
+        color: LockConfig.style.muted;
+        font-size: 18px;
+        vertical-alignment: center;
+    }
+    // Battery status glyph beside the percentage in the menu footer.
+    Rectangle {
+        x: root.width - 176px; y: root.height - 105px; width: 24px; height: 14px;
+        border-radius: 3px;
+        border-width: 1.5px;
+        border-color: LockConfig.style.muted;
+        background: transparent;
+        Rectangle {
+            x: 2px; y: 2px; width: 18px * clamp(HostState.battery-pct / 100.0, 0.0, 1.0); height: 8px;
+            border-radius: 1px;
+            background: HostState.battery-pct < 15 ? #ff625f : LockConfig.style.accent;
+        }
+    }
+    Rectangle {
+        x: root.width - 151px; y: root.height - 101px; width: 3px; height: 6px;
+        border-radius: 1px;
+        background: LockConfig.style.muted;
+    }
+    HostText {
+        x: root.width - 140px; y: root.height - 120px; width: 64px; height: 40px;
+        text: HostState.battery-pct < 0 ? "--" : HostState.battery-pct + "%";
         color: LockConfig.style.muted;
         font-size: 18px;
         horizontal-alignment: right;

@@ -70,14 +70,22 @@ impl Settings {
             Err(e) if e.kind() == io::ErrorKind::NotFound => {}
             Err(e) => log(&format!("settings: {e}; using defaults")),
         }
+        // Migrate the previous built-in scooter title to the requested user-name default.
+        if settings.values.get("dashboard-model-title").and_then(Json::as_str) == Some("SUPER SCOOTER S1 PRO") {
+            settings.values.insert("dashboard-model-title".into(), Json::String("MIDHUN SANKAR".into()));
+            if let Err(e) = write(path, &settings.values) {
+                log(&format!("settings: user-name migration could not be saved: {e}"));
+            }
+        }
         settings
     }
 
     pub fn night(&self) -> NightMode {
         match self.values.get("night").and_then(Json::as_str) {
+            Some("off") => NightMode::Off,
             Some("on") => NightMode::On,
-            Some("auto") => NightMode::Auto,
-            _ => NightMode::Off,
+            Some("auto") | None => NightMode::Auto,
+            _ => NightMode::Auto,
         }
     }
 
@@ -97,6 +105,18 @@ impl Settings {
 
     pub fn clock24(&self) -> bool {
         self.values.get("clock24").and_then(Json::as_bool).unwrap_or(true)
+    }
+
+    pub fn brightness(&self) -> Option<u32> {
+        self.values.get("brightness").and_then(Json::as_u64)
+            .filter(|n| (10..=100).contains(n))
+            .map(|n| n as u32)
+    }
+
+    fn dashboard_text(&self, key: &str, default: &str) -> String {
+        self.values.get(key).and_then(Json::as_str)
+            .filter(|value| value.chars().count() <= 48 && !value.chars().any(char::is_control))
+            .unwrap_or(default).to_string()
     }
 
     pub fn setup_done(&self) -> bool {
@@ -126,6 +146,13 @@ impl Settings {
                 Json::from(minutes)
             }
             ("clock24", "true" | "false") => Json::Bool(value == "true"),
+            ("brightness", _) => {
+                let percent = value.parse::<u32>().ok().filter(|n| (10..=100).contains(n))
+                    .ok_or_else(|| format!("settings: invalid brightness={value}"))?;
+                Json::from(percent)
+            },
+            ("dashboard-model-title" | "dashboard-color" | "dashboard-capacity" | "dashboard-owner-title", _)
+                if value.chars().count() <= 48 && !value.chars().any(char::is_control) => Json::String(value.into()),
             ("setup", "done") => Json::String(value.into()),
             _ => return Err(format!("settings: invalid {key}={value}")),
         };
@@ -169,11 +196,24 @@ pub fn refresh_night(ui: &ComponentInstance) -> Result<(), String> {
     apply_night(ui, night_now(mode, start, end, hhmm, trusted))
 }
 
-fn apply_preferences(ui: &ComponentInstance, settings: &SharedSettings, refresh_clock: fn(&ComponentInstance)) -> Result<(), String> {
+fn apply_preferences(
+    ui: &ComponentInstance,
+    settings: &SharedSettings,
+    refresh_clock: fn(&ComponentInstance),
+    system_brightness: u32,
+) -> Result<(), String> {
     // Release the shared borrow before updating any UI property or callback.
-    let (mode, start, end, clock24) = {
+    let (mode, start, end, clock24, brightness, dashboard_labels) = {
         let s = settings.borrow();
-        (s.night(), s.night_start(), s.night_end(), s.clock24())
+        (
+            s.night(), s.night_start(), s.night_end(), s.clock24(), s.brightness().unwrap_or(system_brightness),
+            [
+                ("dashboard-model-title", s.dashboard_text("dashboard-model-title", "MIDHUN SANKAR")),
+                ("dashboard-color", s.dashboard_text("dashboard-color", "NEO MINT BLUE")),
+                ("dashboard-capacity", s.dashboard_text("dashboard-capacity", "4 KWH")),
+                ("dashboard-owner-title", s.dashboard_text("dashboard-owner-title", "MIDHUN SANKAR'S S1 PRO")),
+            ],
+        )
     };
     for (prop, value) in [("night-mode", mode as i32 as f64), ("night-start", start as f64), ("night-end", end as f64)] {
         ui.set_global_property("HostState", prop, Value::Number(value))
@@ -184,23 +224,48 @@ fn apply_preferences(ui: &ComponentInstance, settings: &SharedSettings, refresh_
         ui.set_global_property("HostState", prop, Value::String(text.into()))
             .map_err(|e| format!("HostState.{prop}: {e:?}"))?;
     }
+    for (key, value) in dashboard_labels {
+        ui.set_global_property("Display", key, Value::String(value.into()))
+            .map_err(|e| format!("Display.{key}: {e:?}"))?;
+    }
     ui.set_property("clock24", Value::Bool(clock24))
         .map_err(|e| format!("clock24: {e:?}"))?;
     ui.set_global_property("HostState", "clock24", Value::Bool(clock24))
         .map_err(|e| format!("HostState.clock24: {e:?}"))?;
+    ui.set_global_property("HostState", "brightness-pct", Value::Number(brightness as f64))
+        .map_err(|e| format!("HostState.brightness-pct: {e:?}"))?;
+    let window_brightness = brightness.max(system_brightness);
+    ui.set_global_property("HostState", "brightness-window-pct", Value::Number(window_brightness as f64))
+        .map_err(|e| format!("HostState.brightness-window-pct: {e:?}"))?;
     refresh_clock(ui);
     refresh_night(ui)
 }
 
-pub fn bind(ui: &ComponentInstance, settings: SharedSettings, log: fn(&str), refresh_clock: fn(&ComponentInstance)) -> Result<(), String> {
-    apply_preferences(ui, &settings, refresh_clock)?;
+pub fn bind(
+    ui: &ComponentInstance,
+    settings: SharedSettings,
+    log: fn(&str),
+    refresh_clock: fn(&ComponentInstance),
+    system_brightness: u32,
+    set_brightness: impl Fn(u32) + 'static,
+) -> Result<(), String> {
+    apply_preferences(ui, &settings, refresh_clock, system_brightness)?;
+    let set_brightness: Rc<dyn Fn(u32)> = Rc::new(set_brightness);
+    let initial_brightness = settings.borrow().brightness().unwrap_or(system_brightness);
+    set_brightness(initial_brightness.max(system_brightness));
     let weak = ui.as_weak();
     ui.set_callback("set-setting", move |args| {
         if let [Value::String(key), Value::String(value)] = args {
             let saved = settings.borrow_mut().set(key.as_str(), value.as_str());
             let result = saved.and_then(|_| {
+                if key.as_str() == "brightness" {
+                    let requested = settings.borrow().brightness().unwrap_or(system_brightness);
+                    set_brightness(requested.max(system_brightness));
+                }
                 if key != "setup" {
-                    if let Some(ui) = weak.upgrade() { apply_preferences(&ui, &settings, refresh_clock)?; }
+                    if let Some(ui) = weak.upgrade() {
+                        apply_preferences(&ui, &settings, refresh_clock, system_brightness)?;
+                    }
                 }
                 Ok(())
             });
@@ -242,11 +307,23 @@ mod tests {
     fn missing_file_uses_defaults_without_writing() {
         let dir = Dir::new();
         let settings = Settings::load(Some(&dir.file()), |_| panic!("missing file must be quiet"));
-        assert_eq!(settings.night(), NightMode::Off);
+        assert_eq!(settings.night(), NightMode::Auto);
         assert_eq!(settings.night_start(), NIGHT_START);
         assert_eq!(settings.night_end(), NIGHT_END);
         assert!(settings.clock24());
+        assert_eq!(settings.brightness(), None);
         assert!(!dir.file().exists());
+    }
+
+    #[test]
+    fn brightness_is_persisted_and_rejects_out_of_range_values() {
+        let dir = Dir::new();
+        let mut settings = Settings::load(Some(&dir.file()), |_| {});
+        settings.set("brightness", "42").unwrap();
+        assert_eq!(settings.brightness(), Some(42));
+        assert!(settings.set("brightness", "0").is_err());
+        assert!(settings.set("brightness", "101").is_err());
+        assert_eq!(Settings::load(Some(&dir.file()), |_| {}).brightness(), Some(42));
     }
 
     #[test]
@@ -255,7 +332,7 @@ mod tests {
         for bytes in ["{broken", "[]", "null"] {
             fs::write(dir.file(), bytes).unwrap();
             let settings = Settings::load(Some(&dir.file()), |_| {});
-            assert_eq!(settings.night(), NightMode::Off);
+            assert_eq!(settings.night(), NightMode::Auto);
             assert!(settings.clock24());
             assert!(!dir.file().exists());
             assert_eq!(fs::read_to_string(sibling(&dir.file(), ".bad")).unwrap(), bytes);
@@ -331,7 +408,7 @@ mod tests {
         }
         for bad in [serde_json::json!("AUTO"), Json::Null, Json::Bool(true), Json::from(2)] {
             settings.values.insert("night".into(), bad);
-            assert_eq!(settings.night(), NightMode::Off);
+            assert_eq!(settings.night(), NightMode::Auto);
         }
     }
 

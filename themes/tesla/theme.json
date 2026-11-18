@@ -1,10 +1,10 @@
 {
   "id": "tesla",
   "name": "EV Vision",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "author": "Ola Dash community",
   "license": "GPL-3.0-or-later",
-  "contract": 7,
+  "contract": 9,
   "entry": "main.slint",
-  "description": "A Tesla-inspired minimalist EV cockpit: monochrome surfaces, restrained red accents, large speed readout, battery and range panels, media and navigation."
+  "description": "Premium glassmorphism EV cockpit with live efficiency-based predicted range, battery telemetry, scooter controls, and automatic day/night palettes."
 }

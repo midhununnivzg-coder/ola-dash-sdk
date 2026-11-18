@@ -190,7 +190,7 @@ export component Host inherits Window {
         width: parent.width; height: parent.height;
         themes: root.themes;
         active-theme: root.active-theme;
-        night: HostState.night;
+        night-mode: HostState.night-mode;
         set-setting(key, value) => { root.set-setting(key, value); }
         done(id) => {
             if root.host-screens-allowed && root.first-run && !root.confirm-theme {
@@ -200,6 +200,13 @@ export component Host inherits Window {
                 else { root.screen = "dash"; }
             }
         }
+    }
+    // Dim app content when the requested level is below the Android window baseline.
+    // The host safety overlay is drawn after this layer and stays fully visible.
+    if HostState.brightness-window-pct > HostState.brightness-pct : Rectangle {
+        width: parent.width; height: parent.height;
+        background: #000000;
+        opacity: 1.0 - HostState.brightness-pct * 1.0 / HostState.brightness-window-pct;
     }
     HostOverlay {
         width: parent.width; height: parent.height;

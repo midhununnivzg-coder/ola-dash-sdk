@@ -284,7 +284,7 @@ export component Dash inherits Window {
     for cell[i] in [
         { x: 64px, label: "ODO KM", value: "" + round(Vehicle.odometer-km) },
         { x: 232px, label: "TRIP KM", value: trip-text },
-        { x: 384px, label: "PACK \u{00B0}C", value: Battery.temp-max-c < 0 ? "--" : "" + round(Battery.temp-max-c) },
+        { x: 384px, label: "BATTERY TEMP \u{00B0}C", value: Battery.temp-max-c < 0 ? "--" : "" + round(Battery.temp-max-c) },
         { x: 488px, label: "TIME", value: Vehicle.clock-text == "" ? "--:--" : Vehicle.clock-text },
     ] : Text {
         x: cell.x;

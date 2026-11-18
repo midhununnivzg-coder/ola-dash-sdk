@@ -12,7 +12,8 @@
 //          v5 VehicleState, Battery, Ride, Navigation, Plugins; -1 = not reported yet |
 //          v6 overlay-placement, telltale-order, overlay-style, alert-position (optional Dash props),
 //             trunk-open, Actions.open-trunk | v6 also: lock-style (optional Dash prop, lock screen) |
-//          v7 Display.night, Vehicle.data-stale, Actions.open-apps, Actions.open-themes
+//          v7 Display.night, Vehicle.data-stale, Actions.open-apps, Actions.open-themes |
+//          v8 editable dashboard labels in Display; v9 predicted range and calibration state
 
 export enum DriveMode { eco, normal, sport, hyper, unknown, park, reverse, custom, easy-park }
 
@@ -59,12 +60,15 @@ export struct OverlayStyle {
 }
 
 export global Vehicle {
-    out property <int> contract-version: 7;
+    out property <int> contract-version: 9;
 
     in property <float> speed-kmh;
     // -1 until the vehicle reports a value; themes should show "--".
     in property <int> battery-pct: -1;
     in property <int> range-km: -1;
+    // Live efficiency-based estimate, initially mirroring range-km until 2 km or 2% SoC is used.
+    in property <float> predicted-range-km: -1;
+    in property <bool> range-calibrated: false;
     in property <DriveMode> mode: DriveMode.unknown;
     // False when the owner app revoked Hyper (mode button then cycles to Custom).
     in property <bool> hyper-available: true;
@@ -117,9 +121,13 @@ export global Media {
     in property <string> title;
     in property <string> artist;
     in property <bool> playing;
+    in property <float> position-ms;
+    in property <float> duration-ms;
     callback play-pause();
     callback next();
     callback previous();
+    callback volume-up();
+    callback volume-down();
 }
 
 // Turn-by-turn from a navigation plugin. Empty strings when inactive.
@@ -146,8 +154,13 @@ export global Plugins {
 
 // Host display state.
 export global Display {
-    // True when it is dark (automatic or forced); themes may switch to a night palette. Not set by the host yet (E3.S1).
+    // True when it is dark (forced or scheduled Auto mode); themes may switch to a night palette.
     in property <bool> night;
+    // User-editable labels for the dashboard, persisted by the host.
+    in property <string> dashboard-model-title: "SUPER SCOOTER S1 PRO";
+    in property <string> dashboard-color: "NEO MINT BLUE";
+    in property <string> dashboard-capacity: "4 KWH";
+    in property <string> dashboard-owner-title: "MIDHUN SANKAR'S S1 PRO";
 }
 
 // Harmless actions, plus one gated vehicle request. Other vehicle commands

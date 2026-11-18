@@ -780,7 +780,7 @@ fn option_warn(msg: &str) {
 
 fn bind_settings(inst: &ComponentInstance, args: &Args) -> Result<settings::SharedSettings, Box<dyn Error>> {
     let settings = Rc::new(RefCell::new(settings::Settings::load(args.settings.as_deref(), sim_warn)));
-    settings::bind(inst, settings.clone(), sim_warn, refresh_clock)?;
+    settings::bind(inst, settings.clone(), sim_warn, refresh_clock, 100, |_| {})?;
     if args.night {
         inst.set_global_property("HostState", "night-mode", Value::Number(settings::NightMode::On as i32 as f64))?;
         settings::refresh_night(inst)?;
@@ -1273,7 +1273,7 @@ mod tests {
             theme_root::bind(&ui, sim_warn).unwrap();
             let settings = Rc::new(RefCell::new(settings::Settings::default()));
             settings.borrow_mut().set("night", "auto").unwrap();
-            settings::bind(&ui, settings.clone(), sim_warn, refresh_clock).unwrap();
+            settings::bind(&ui, settings.clone(), sim_warn, refresh_clock, 100, |_| {}).unwrap();
             let get = |prop| ui.get_global_property("HostState", prop).unwrap();
             let check_night = |night| {
                 assert_eq!(get("night"), Value::Bool(night));
@@ -1345,7 +1345,7 @@ mod tests {
             settings.borrow_mut().set_option("options", "count", json!(8)).unwrap();
             settings.borrow_mut().set_option("options", "style", json!("unknown")).unwrap();
             theme_root::bind(&ui, option_warn).unwrap();
-            settings::bind(&ui, settings.clone(), option_warn, |_| {}).unwrap();
+            settings::bind(&ui, settings.clone(), option_warn, |_| {}, 100, |_| {}).unwrap();
             theme_options::bind(&ui, &options, "options", settings.clone(),
                 &[("count".into(), "-2".into())], option_warn).unwrap();
             assert_eq!(ui.get_property("opt-count").unwrap(), Value::Number(-2.0));

@@ -1,5 +1,6 @@
 package dev.olatool.dash;
 
+import android.app.AlertDialog;
 import android.app.NativeActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -34,6 +35,39 @@ public final class MainActivity extends NativeActivity {
     private static final long TEST_MAX_MS = 10 * 60_000L;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private volatile boolean firstFrameRendered;
+    private volatile int requestedBrightness = -1;
+    private final Runnable startupWatchdog = () -> {
+        if (!firstFrameRendered) {
+            showStartupMessage("Ola Dash started, but the native dashboard did not draw its first frame within 15 seconds. This diagnostic build is checking the Android graphics and Slint startup path.");
+        }
+    };
+
+    /** Called by Rust after Slint has successfully presented the first dashboard frame. */
+    public void onNativeFirstFrame() {
+        handler.post(() -> {
+            firstFrameRendered = true;
+            handler.removeCallbacks(startupWatchdog);
+        });
+    }
+
+    /** Called by Rust when native initialisation or dashboard construction fails. */
+    public void onNativeStartupError(String message) {
+        handler.post(() -> {
+            firstFrameRendered = true;
+            handler.removeCallbacks(startupWatchdog);
+            showStartupMessage(message);
+        });
+    }
+
+    private void showStartupMessage(String message) {
+        if (isFinishing() || isDestroyed()) return;
+        new AlertDialog.Builder(this)
+                .setTitle("Ola Dash startup diagnostic")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
+    }
     private final Runnable testOff = () -> VehicleBridge.setTestMode(false);
     private BroadcastReceiver testReceiver;
     static volatile boolean paused;
@@ -51,6 +85,38 @@ public final class MainActivity extends NativeActivity {
     /** Theme asked for the trunk. The host gate decides (see TrunkGate). */
     public void onOpenTrunk() {
         VehicleBridge.openTrunk();
+    }
+
+    /** Reads the current window override or Android's saved screen brightness (0-100). */
+    public int onGetScreenBrightness() {
+        float windowBrightness = getWindow().getAttributes().screenBrightness;
+        if (windowBrightness >= 0.0f) {
+            return Math.max(10, Math.min(100, Math.round(windowBrightness * 100.0f)));
+        }
+        int systemBrightness = Settings.System.getInt(
+                getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 255);
+        return Math.max(10, Math.min(100, Math.round(systemBrightness * 100.0f / 255.0f)));
+    }
+
+    /** Applies a per-window brightness override; Android restores system brightness outside this app. */
+    private void applyWindowBrightness(int percent) {
+        if (isFinishing() || isDestroyed()) return;
+        WindowManager.LayoutParams params = getWindow().getAttributes();
+        float target = percent / 100.0f;
+        // Reapplying identical window attributes during screen wake can trigger a SurfaceView
+        // relayout on some Android 10 vendor builds. That produces a brief blank/scale animation.
+        // Only update the window when the brightness override has actually changed.
+        if (Math.abs(params.screenBrightness - target) < 0.005f) return;
+        params.screenBrightness = target;
+        getWindow().setAttributes(params);
+    }
+
+    public void onSetBrightness(int percent) {
+        final int bounded = Math.max(10, Math.min(100, percent));
+        requestedBrightness = bounded;
+        Runnable apply = () -> applyWindowBrightness(bounded);
+        if (Looper.myLooper() == Looper.getMainLooper()) apply.run();
+        else handler.post(apply);
     }
 
     /** Called synchronously by Rust before a theme-switch process exit. */
@@ -81,6 +147,9 @@ public final class MainActivity extends NativeActivity {
         // Bad-theme guard: strike the active theme before Slint can crash on it (cleared below).
         Log.i(TAG, "theme guard: " + BadThemeGuard.strike(getFilesDir()));
         super.onCreate(state);
+        // Do not animate Activity window transitions: the native Slint surface is full-screen.
+        getWindow().setWindowAnimations(0);
+        handler.postDelayed(startupWatchdog, 15_000L);
         handler.postDelayed(BadThemeGuard::cleanExit, 10_000L); // survived 10 s
         // Unverified until M-sleep (session A): does the locked panel still sleep with this flag?
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -124,6 +193,7 @@ public final class MainActivity extends NativeActivity {
     protected void onResume() {
         super.onResume();
         paused = false;
+        if (requestedBrightness >= 0) applyWindowBrightness(requestedBrightness);
     }
 
     @Override

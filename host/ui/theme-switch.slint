@@ -15,17 +15,21 @@ export component ThemeList inherits Flickable {
     in-out property <string> selection;
     content-width: self.width;
     content-height: max(self.height, root.themes.length * 112px - 16px);
+    // Keep the active theme visibly selected whenever the list is first opened.
+    init => { root.selection = root.active-theme; }
     for theme[i] in root.themes : Rectangle {
         x: 0px; y: i * 112px; width: parent.width; height: 96px;
         border-radius: 24px;
         border-width: 1px;
         border-color: LockConfig.style.key-border;
         property <bool> selected: root.selection == theme.id;
-        property <color> ink: self.selected ? LockConfig.on-accent : LockConfig.style.foreground;
-        property <color> secondary: self.selected ? LockConfig.on-accent : LockConfig.style.muted;
+        property <color> selected-fill: theme.id == "tesla" ? #bce8dc : #c9dcf4;
+        property <color> selected-ink: theme.id == "tesla" ? #123a31 : #18324b;
+        property <color> ink: self.selected ? self.selected-ink : LockConfig.style.foreground;
+        property <color> secondary: self.selected ? self.selected-ink.with-alpha(0.82) : LockConfig.style.muted;
         property <bool> has-tag: theme.id == root.active-theme || theme.source == "sideloaded";
         property <length> text-width: self.width - 168px - (self.has-tag ? 168px : 24px);
-        background: self.selected ? LockConfig.style.accent : LockConfig.style.key-background;
+        background: self.selected ? self.selected-fill : LockConfig.style.key-background;
         accessible-role: button;
         accessible-label: theme.name;
         accessible-checkable: true;
@@ -75,7 +79,7 @@ export component ThemeList inherits Flickable {
 export component FirstRunScreen inherits Rectangle {
     in property <[ThemeInfo]> themes;
     in property <string> active-theme;
-    in property <bool> night;
+    in property <int> night-mode;
     callback set-setting(string, string);
     callback done(string);
     property <string> theme-selection;
@@ -109,7 +113,7 @@ export component FirstRunScreen inherits Rectangle {
         }
         HostText {
             x: 0px; y: 440px; width: 168px; height: 64px;
-            text: "Night mode";
+            text: "Display mode";
             color: LockConfig.style.foreground;
             font-size: 26px;
             font-weight: 700;
@@ -117,9 +121,9 @@ export component FirstRunScreen inherits Rectangle {
         }
         Choice {
             x: 192px; y: 440px; width: parent.width - 192px;
-            options: ["Off", "On"];
-            selected: root.night ? 1 : 0;
-            chosen(index) => { root.set-setting("night", index == 0 ? "off" : "on"); }
+            options: ["Light", "Dark", "Auto"];
+            selected: root.night-mode;
+            chosen(index) => { root.set-setting("night", index == 0 ? "off" : index == 1 ? "on" : "auto"); }
         }
         PillButton {
             x: parent.width - self.width; y: 536px;

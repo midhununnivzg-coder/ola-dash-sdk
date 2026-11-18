@@ -1,6 +1,6 @@
 # Theme contract reference
 
-The contract is `contract/vehicle.slint`, currently **`contract-version: 7`**. It is the only API a theme may use. Themes read `in` properties and invoke the callbacks listed here. The host writes the `in` properties; themes must never assign to them.
+The contract is `contract/vehicle.slint`, currently **`contract-version: 9`**. It is the only API a theme may use. Themes read `in` properties and invoke the callbacks listed here. The host writes the `in` properties; themes must never assign to them.
 
 Units: distances in km, speed in km/h, temperatures in °C, current in A, voltage in V. `-1` means "not reported yet" wherever a default of `-1` is listed. Themes should show `--`.
 
@@ -54,10 +54,12 @@ Theme options are an additive part of contract 7, with no version bump: an optio
 
 | Property | Type | Default | Notes |
 |---|---|---|---|
-| `contract-version` | `out int` | 7 | Read-only. The contract version the theme was compiled against. |
+| `contract-version` | `out int` | 9 | Read-only. The contract version the theme was compiled against. |
 | `speed-kmh` | `in float` | 0 | km/h |
 | `battery-pct` | `in int` | -1 | Rounded state of charge, %. Use `Battery.soc-pct` for the fine value. |
-| `range-km` | `in int` | -1 | Estimated range, km |
+| `range-km` | `in int` | -1 | Original estimated range from the vehicle's Range tab, km |
+| `predicted-range-km` | `in float` | -1 | Host-calculated range from observed distance and SoC consumption, km |
+| `range-calibrated` | `in bool` | false | True after the first 2 km or 2 percentage points of SoC consumption |
 | `mode` | `in DriveMode` | `unknown` | Current drive mode |
 | `hyper-available` | `in bool` | true | False when the owner's app revoked Hyper. The mode button then cycles to Custom. |
 | `charging` | `in bool` | false | True during a charger session |
